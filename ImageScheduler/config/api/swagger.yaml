@@ -1,0 +1,566 @@
+# this is an example of the Uber API
+# as a demonstration of an API spec in YAML
+swagger: '2.0'
+info:
+  title: Mirror Calendar Event viewer
+  description: show images related to calendar events
+  version: "1.1.0"
+
+# array of all schemes that your API supports
+schemes:
+  - http
+  - https
+# will be prefixed to all paths
+basePath: /
+produces:
+  - application/json
+consumes:  
+  - application/json
+paths:
+  /files:
+     x-swagger-router-controller: files
+     get:
+      summary: get files(s)
+      parameters:
+        - name: SourceId
+          in: query
+          description: the datasource root from which this is sourced
+          required: false
+          type: string            
+        - name: path
+          in: query
+          description: the root path of the file search
+          required: true
+          type: string
+        - name: SourceType 
+          required: false        
+          in: query
+          type: string
+          description:  something
+        - name: FoldersOnly
+          required: true
+          in: query
+          type: string
+          description:  requesting only folder results
+      responses:
+        200:
+          description: An array of files
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/File'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error' 
+  /tags:
+     x-swagger-router-controller: tags
+     get:
+      summary: get tag(s)
+      parameters:
+        - name: id
+          in: query
+          description: foo
+          required: false
+          type: string
+      responses:
+        200:
+          description: An array of tags
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Tag'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'   
+     post:
+      summary: create tag
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:    
+            $ref: '#/definitions/Tag'
+      responses:
+        201:
+          description: created
+          schema:
+            $ref: '#/definitions/ID'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+     put:
+      summary: update viewer
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: dddd
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:    
+            $ref: '#/definitions/Tag'
+      responses:
+        200:
+          description: updated
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'      
+     delete:
+      summary: delete viewer
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: dddd
+          required: true
+          type: string
+      responses:
+        200:
+          description: deleted
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error' 
+  /viewers:
+    x-swagger-router-controller: viewers
+    get:
+      summary: get viewer(s)
+      description: |
+        fribble
+      parameters:
+        - name: id
+          in: query
+          description: foo
+          required: false
+          type: string
+      responses:
+        200:
+          description: An array of viewers
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Viewer'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: create viewer
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:    
+            $ref: '#/definitions/Viewer'
+      responses:
+        201:
+          description: created
+          schema:
+             $ref: '#/definitions/ID'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: update viewer
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: dddd
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:    
+            $ref: '#/definitions/Viewer'
+      responses:
+        200:
+          description: updated
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'      
+    delete:
+      summary: delete viewer
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: dddd
+          required: true
+          type: string
+      responses:
+        200:
+          description: deleted
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'      
+  /datasources:
+    x-swagger-router-controller: datasources
+    get:
+      summary: get datasources
+      description: |
+        fribble
+      parameters:
+        - name: id
+          in: query
+          description: foo
+          required: false
+          type: string
+      responses:
+        200:
+          description: An array of viewers
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DataSource'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: create datasource
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:    
+             $ref: '#/definitions/DataSource'
+      responses:
+        201:
+          description: created
+          schema:
+             $ref: '#/definitions/ID'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: update datasource
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: dddd
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:    
+             $ref: '#/definitions/DataSource'
+      responses:
+        200:
+          description: updated
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'      
+    delete:
+      summary: delete datasource
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: dddd
+          required: true
+          type: string
+      responses:
+        200:
+          description: deleted
+        409:
+          description: conflicts          
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error' 
+  /images:
+    x-swagger-router-controller: images
+    get:
+      summary: get images
+      description: |
+        fribble
+      parameters:
+        - name: id
+          in: query
+          description: foo
+          required: false
+          type: string
+        - name: start
+          in: query
+          description: foobar
+          required: false
+          type: integer
+        - name: count
+          in: query
+          description: foobar
+          required: false
+          type: integer          
+      responses:
+        200:
+          description: An array of images
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Image'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: create image
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:    
+             $ref: '#/definitions/Image'
+      responses:
+        201:
+          description: created
+          schema:
+             $ref: '#/definitions/ID'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: update image
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: dddd
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:    
+             $ref: '#/definitions/Image'
+      responses:
+        200:
+          description: updated
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'      
+    delete:
+      summary: delete image
+      description: |
+        fribble
+      consumes:
+        - application/json
+      parameters:
+        - name: id
+          in: query
+          description: dddd
+          required: true
+          type: string
+      responses:
+        200:
+          description: deleted
+        409:
+          description: conflict          
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'             
+definitions:
+  ID:
+    type: object
+    description: bar
+    properties:
+      id: 
+        type: string
+        description: bar
+  Tag:
+    type: object
+    description: holds tags for imaegs and viewers
+    required: [value]
+    properties:
+      id:
+        type: string
+      value:
+        type: string
+      description:
+        type: string
+  Viewer:
+    type: object
+    description: bar
+    required: [ Name, Advance,ImageRefreshRate,Active ]
+    properties:
+      id: 
+        type: string
+        description: bar
+      Name:
+        type: string
+        description: foo
+      Description:
+        type: string
+        description: something
+      Advance:
+        type: integer
+        format: int32
+        description: foo
+      ImageRefreshRate:
+        type: integer
+        format: int32
+        description: foobar
+      Active:
+        type: boolean
+        description: viewer active or not
+      Tags:
+        type: array
+        items: {
+          type: "string"
+        }
+      SourceConstraint:
+        type: object
+        properties:
+          in:
+            type: array
+            items: {
+              type: "string"
+            }
+          out:
+            type: array
+            items: {
+              type: "string"
+            }    
+  SourceType:
+    type: object
+    properties:
+      Type:
+        type: string
+        description: bar
+        enum: 
+          - File
+          - Samba
+          - DropBox
+          - GoogleDrive
+          - Onedrive
+  DataSource:
+    type: object
+    description: bar
+    required: [ Name, Type,Active, Root]
+    properties:
+      id:
+        type: string
+        description: bar
+      Name:
+        type: string
+        description: bar
+      Description:
+        type: string
+        description: bar
+      Type:
+        $ref: '#/definitions/SourceType' 
+      Active:
+        type: boolean
+        description: bar
+      Authinfo:
+        type: object
+        description: bar
+        properties:
+          OAuthid:
+            type: string
+            description: bar
+          Userid:
+            type: string
+            description: bar
+          Password:
+            type: string
+            description: bar
+      Root:
+        type: string
+  Image:
+    type: object
+    description: bar
+    required: [ Name, DataSource, PathFromSource,Tags ]
+    properties:
+      id:
+        type: string
+        description: bar
+      Name:
+        type: string
+        description: foo
+      Description:
+        type: string
+        description: bar
+      DataSource:
+        type: string
+        description: bar
+      PathFromSource:
+        type: string
+        description: bar
+      Tags:
+        type: array
+        items: {
+              type: "string"
+          }
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
+  File:
+    type: object
+    properties:
+      name:
+        type: string
+      filetype:
+        type: string
+        enum: [ File, Folder]        
