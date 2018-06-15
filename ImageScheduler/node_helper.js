@@ -8,7 +8,7 @@ var swaggerTools = require('swagger-tools');
 var jsyaml = require('js-yaml');
 var fsc = require('fs');
 var dgram = require('dgram');
-var serverPort = 8099;
+
 
 
 // database server
@@ -32,20 +32,18 @@ dbData.Tags=[]
 dbData.valid=false;
 
 module.exports = NodeHelper.create({
-							defaults: {
-									"ViewerWidth": 200,
-									"ViewerHeight": 300
-							},
-
+							config: null,
 							init: function(){
 									console.log("scheduler helper in init");
 							},
 					
 							start: function(){
-									console.log("scheduler helper in start");
+								  console.log("scheduler helper in start");
 									self=this;
-
-									// swagger server setup
+							},
+							start_connections: function(config, callback){
+									
+								// swagger server setup
 
 								// swaggerRouter configuration
 								console.log("dirname="+__dirname);
@@ -74,17 +72,17 @@ module.exports = NodeHelper.create({
 									webserver.use(middleware.swaggerUi());
 
 									// Start the server
-									http.createServer(webserver).listen(serverPort,
+									http.createServer(webserver).listen(this.config.serverPort,
 										function () {
-										 console.log('Your server is listening on port %d (http://localhost:%d)', serverPort, serverPort);
-										 console.log('Swagger-ui is available on http://localhost:%d/docs', serverPort);
+										 console.log('Your server is listening on port %d (http://localhost:%d)', this.config.serverPort, this.config.serverPort);
+										 console.log('Swagger-ui is available on http://localhost:%d/docs', this.config.serverPort);
 									});
 								});
 
 								// start the discovery server
 								let HOST = '0.0.0.0';
 
-								let response = new Buffer("DISCOVER_MIRRORSERVER_RESPONSE:" + serverPort);
+								let response = new Buffer("DISCOVER_MIRRORSERVER_RESPONSE:" + this.config.serverPort);
 								let request = "DISCOVER_MIRRORSERVER_REQUEST:";
 
 								let server = dgram.createSocket('udp4');
@@ -128,24 +126,26 @@ module.exports = NodeHelper.create({
 									}
 								});
 
-								server.bind(serverPort + 1, HOST);
+								server.bind(config.serverPort + 1, HOST);
 
 
-
-									// database change setup
-									MongoClient.connect("mongodb://" +
-											"localhost" +
-											":" +
-											"27017" +
-											"/" +
-											"test",
-											{useNewUrlParser:true},
-											function (err, client) {
+								// database change setup
+								MongoClient.connect("mongodb://" +
+													this.config.MongoDBLocation +
+													":" +
+													this.config.MongoPort +
+													"/" +
+													this.config.MongoDBName,
+										
+										{useNewUrlParser:true},
+										
+										function (err, client) {
 											if(err!=null)
 												{
 													console.log("mongo db error="+JSON.stringify(err));
 												}
 											vdb = client.db('test');
+											
 											if(common==null)
 											{
 												common=require(path.resolve(__dirname, 'common.js'));
@@ -155,20 +155,20 @@ module.exports = NodeHelper.create({
 													format: 'pretty'
 												})
 
-												watcher.watch('test.EventViewers',
-													function (event) {
-													// console.log("mongo EventViewer collection event=" + event.toString());
-													if (event.operation == 'd') {
-														// console.log("shutdown any viewer that is running but deleted");
-														let running = viewerRunning(ImageService.viewerList, event.data._id);
-														if (running)
-															// stop it
-															ImageService.cancel(running.Viewer);
-													} else {
-														closeopenviewers()
-														checkforviewers()
-													}
-												});
+											watcher.watch('test.EventViewers',
+												function (event) {
+												// console.log("mongo EventViewer collection event=" + event.toString());
+												if (event.operation == 'd') {
+													// console.log("shutdown any viewer that is running but deleted");
+													let running = this.viewerRunning(ImageService.viewerList, event.data._id);
+													if (running)
+														// stop it
+														ImageService.cancel(running.Viewer);
+												} else {
+													this.closeopenviewers()
+													this.checkforviewers()
+												}
+											});
 											watcher.watch('test.DataSources',
 												function (event) {
 												// console.log("mongo DataSources collection event=" + event.toString());
@@ -183,7 +183,7 @@ module.exports = NodeHelper.create({
 																// if the source entry matches the one removed
 																if (ImageItem.Source._id == event.data._id) {
 																	// remove this item from the list
-																	removeImageItemfromlist(viewerinfo.Viewer.items, ImageItem)
+																	this.removeImageItemfromlist(viewerinfo.Viewer.items, ImageItem)
 																}
 															}
 															// if there are no more things to view
@@ -194,7 +194,7 @@ module.exports = NodeHelper.create({
 															}
 													}
 												} else {
-													checkforviewers()
+													this.checkforviewers()
 												}
 											});
 											watcher.watch('test.Tags',
@@ -223,7 +223,7 @@ module.exports = NodeHelper.create({
 																// if the source entry matches the one removed
 																if (ImageItem.Image._id == event.data._id) {
 																	// remove this item from the list
-																	removeImageItemfromlist(viewerinfo.Viewer.items, ImageItem)
+																	this.removeImageItemfromlist(viewerinfo.Viewer.items, ImageItem)
 																}
 															}
 															// if there are no more things to view
@@ -237,62 +237,64 @@ module.exports = NodeHelper.create({
 													this.checkforviewers()
 												}
 											});
-										}
-										);
+											this.c();
+										}.bind({c:callback})
+								);
 
-										function removeImageItemfromlist(list, item) {
-											for (var i = 0; i < list.length; i++) {
-												if (list[i].Source.id === item.Source.id &&
-													list[i].Image.id === item.Image.id) {
-													list.splice(i, 1);
-													break;
-												}
+								function removeImageItemfromlist(list, item) {
+									for (var i = 0; i < list.length; i++) {
+										if (list[i].Source.id === item.Source.id &&
+											list[i].Image.id === item.Image.id) {
+											list.splice(i, 1);
+											break;
+										}
+									}
+								}
+								function closeopenviewers() {
+									// remove any viewer that are open but the viewer has been marked inactive
+									// loop thru the inactive viewers, if any
+									vdb.collection('EventViewers').find({
+										"Active": false
+									}).each(
+										function (err, Viewer) {
+										if (Viewer != null) {
+											var running = viewerRunning(ImageService.viewerList, Viewer.Name);
+											if (running) {
+												// stop it
+												ImageService.cancel(Viewer);
 											}
 										}
-										function closeopenviewers() {
-											// remove any viewer that are open but the viewer has been marked inactive
-											// loop thru the inactive viewers, if any
-											vdb.collection('EventViewers').find({
-												"Active": false
-											}).each(
-												function (err, Viewer) {
-												if (Viewer != null) {
-													var running = viewerRunning(ImageService.viewerList, Viewer.Name);
-													if (running) {
-														// stop it
-														ImageService.cancel(Viewer);
+									});
+									// now remove any viewer that are open but the datasource has been marked inactive
+									vdb.collection('DataSources').find({
+										"Active": false
+									}).toArray(
+										function (err, inactiveSources) {
+										if (inactiveSources.length > 0) {
+											// have list of inactive sources, if any
+											// loop thru runnign viewers
+											ImageService.viewerList.forEach(
+												function (running) {
+												// loop thru any of its view items
+												running.Viewer.items.forEach(
+													function (ImageItem) {
+													// now, for each view item, check if the source has gone inactive
+													for (let Source of inactiveSources) {
+														// console.log("shutdown any viewer where the datasource is now inactive");
+														// if the source entry matches the one inactive
+														if (ImageItem.Source._id == Source._id) {
+															// stop the viewer
+															ImageService.cancel(running.Viewer);
+															break;
+														}
 													}
-												}
+												});
 											});
-											// now remove any viewer that are open but the datasource has been marked inactive
-											vdb.collection('DataSources').find({
-												"Active": false
-											}).toArray(
-												function (err, inactiveSources) {
-												if (inactiveSources.length > 0) {
-													// have list of inactive sources, if any
-													// loop thru runnign viewers
-													ImageService.viewerList.forEach(
-														function (running) {
-														// loop thru any of its view items
-														running.Viewer.items.forEach(
-															function (ImageItem) {
-															// now, for each view item, check if the source has gone inactive
-															for (let Source of inactiveSources) {
-																// console.log("shutdown any viewer where the datasource is now inactive");
-																// if the source entry matches the one inactive
-																if (ImageItem.Source._id == Source._id) {
-																	// stop the viewer
-																	ImageService.cancel(running.Viewer);
-																	break;
-																}
-															}
-														});
-													});
-												}
-											});
-										};
-									},
+										}
+									});
+								};
+							},
+									
 							getData: function()
 							{
 								let self=this;
@@ -346,8 +348,12 @@ module.exports = NodeHelper.create({
 										case 'sched_init': 
 											{
 												console.log("sched_init received in helper");
-												this.getData();
-												this.sendSocketNotification(notification+" completed",null);
+												this.config=payload;
+												this.start_connections(this.config, function(){
+													self.getData();
+													self.sendSocketNotification(notification+" completed",null);
+													}
+												);
 											}
 											break;
 										case "refreshData":

@@ -6,7 +6,8 @@ Module.register("ImageScheduler",{
        						"MongoDBLocation": "localhost",
         					"MongoPort": 27017,
 									"MongoDBName": "test",
-        					"ConfigServerPort": 8099
+        					"ConfigServerPort": 8099,
+									"debug": false
 							},
 							dbData:{
 								ActiveViewers:[],
@@ -74,11 +75,12 @@ Module.register("ImageScheduler",{
 									Log.log("scheduler in notificationReceived");
 								  Log.log("notification='"+notification+"'");
 									Log.log("sender="+sender);
-									Log.log("payload="+JSON.stringify(payload));
+									if(self1.config.debug)
+										Log.log("payload="+JSON.stringify(payload));
 									switch(notification) 
 									{									
-										case 'ALL_MODULES_STARTED':
-												self1.sendSocketNotification("sched_init", null);
+										case 'ALL_MODULES_STARTED':												
+												self1.sendSocketNotification("sched_init", self1.config);
 												if(ImageService==null)
 												{
                  				   Log.log("initialize node helper pointer");
@@ -107,12 +109,14 @@ Module.register("ImageScheduler",{
 							socketNotificationReceived: function(notification, payload){
 									Log.log("scheduler in socketNotificationReceived");
 								  Log.log("notification="+notification);
-									Log.log("payload="+JSON.stringify(payload));
+									if(self1.config.debug)
+										Log.log("payload="+JSON.stringify(payload));
 									switch(notification) 
 									{									
 										case "db data":
 												this.dbData=JSON.parse(payload);
-												Log.log("db data refreshed");
+												if(self1.config.debug)
+														Log.log("db data refreshed");
 										break;
 										default:
 										break;
@@ -214,11 +218,13 @@ Module.register("ImageScheduler",{
 			if (this.pebusy == false) {
 				this.pebusy = true;
 				let data=this.getData();
-        Log.log("dbdata="+JSON.stringify(data));
+				if(self1.config.debug)
+       		 Log.log("dbdata="+JSON.stringify(data));
 				for (let Viewer of data.ActiveViewers) {
 					if (Viewer.Tags.length > 0) {
 						//// Log.log(Viewer);
-						Log.log("there are " + filtered_events.length + " entries in the selected cal entry data")
+						if(self1.config.debug)
+							Log.log("there are " + filtered_events.length + " entries in the selected cal entry data")
 						let tagentries=this.tagsfromids(Viewer.Tags)									
 						let needed = false
 						// is a viewer of this name running already
@@ -232,7 +238,8 @@ Module.register("ImageScheduler",{
 							// if we found some tags
 							if (tags.length > 0) {
 								//// Log.log(filtered_events[i]);
-								Log.log("found event with tags for viewer="+Viewer	.Name);
+								if(self1.config.debug)
+									Log.log("found event with tags for viewer="+Viewer	.Name);
 								needed = true;
 								// find any image entries with the same tags as the viewer
 								let possibleimages=this.imagesfortags(tags)
@@ -256,13 +263,15 @@ Module.register("ImageScheduler",{
 											return this.Next(x, y);
 										};
 										ImageService.startViewer(Viewer)
-										Log.log("starting viewer Name="+Viewer.Name);
+										if(self1.config.debug)
+											Log.log("starting viewer Name="+Viewer.Name);
 
 										running = 1;
 										i = tagentries.length // end the loop for this viewer
 									} else {
 										try {
-											Log.log("updating viewer items list");
+											if(self1.config.debug)
+												Log.log("updating viewer items list");
 											// reset the images the viewer should do
 											running.Viewer.items = activeitems.slice();
 										} catch (ex) 
