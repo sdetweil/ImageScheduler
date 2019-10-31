@@ -8,40 +8,42 @@ function worker(parm)
 }
 
 module.exports.listImageFiles = function (ImageItem, viewerinfo, callback) {
-								// if the filename has a wildcard
-					if (ImageItem.Image.PathFromSource.indexOf("*") >= 0) {
-						// construct the url from the source and image entries
-						// do this separately, as we don't know how long it will take for the glob
-						// service to access the url. and we are in a loop changing this on the next iteration
-						var url1 = ImageItem.Source.Root + (ImageItem.Image.PathFromSource.startsWith("/")?"":"/")+ ImageItem.Image.PathFromSource
+		// calculate uri for file(s)
+		let url1 = ImageItem.Source.Root + (ImageItem.Image.PathFromSource.startsWith("/")?"":"/")+ ImageItem.Image.PathFromSource
+    // if its not a directory
+		if(fs.statSync(url1).isDirectory()){
+			// if it does NOT have a wildcard)
+			if(url1.indexOf("*")<0){
+				// add one
+				url1+="/*";
+			}
+		}
+		else {
+				// just one file, add it to the list
+				viewerinfo.images.found.push(Prefix+ImageItem.Source.Root + (ImageItem.Image.PathFromSource.startsWith("/")?"":"/")+ ImageItem.Image.PathFromSource);
+				callback(viewerinfo);
+				return;
+		}
 
-							// use glob to get the list
-							// console.log("globbing");
-							glob(url1, {
-								nocase: true,
-								absolute: true
-								},
-								function (err, files) {
-									if(err==null)
-									{
-										// put all the files on the viewers list
-										files.forEach(function (file) {
-										 	//console.log("adding image for viewer = "+this.b.Viewer.Name+"="+Prefix+file);
-												this.b.images.found.push(Prefix+file)
-											}.bind({b: this.x})
-										);
-									}
-									// let the viewer know we have files
-									callback(this.x);
-								}.bind({x: viewerinfo})
-							);
-					} else {
-						// construct the url from the source and image entries
-						//var url = ImageItem.Source.Root + ImageItem.Image.PathFromSource
-							// just one file, add it to the list
-							viewerinfo.images.found.push(Prefix+ImageItem.Source.Root + (ImageItem.Image.PathFromSource.startsWith("/")?"":"/")+ ImageItem.Image.PathFromSource);
-							callback(viewerinfo);
-					}
+		// use glob to get the list
+		// console.log("globbing");
+		glob(url1, {
+			nocase: true,
+			absolute: true
+			},
+			(err, files) =>{ 
+				if(err==null)
+				{
+					// put all the files on the viewers list
+					files.forEach((file) => {
+						//console.log("adding image for viewer = "+this.b.Viewer.Name+"="+Prefix+file);
+							viewerinfo.images.found.push(Prefix+file)
+					});
+				}
+				// let the viewer know we have files
+				callback(viewerinfo);
+			}
+		);
 }
 module.exports.resolve = function ( file, callback) {
 					console.log("file resolver returning "+actualPrefix+file.substring(Prefix.length)+" for "+file);					
