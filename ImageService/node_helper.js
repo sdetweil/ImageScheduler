@@ -1,53 +1,63 @@
-//const remote= require('electron').BrowserWindow
+const remote= require('electron')
 const BrowserWindow = require('electron').BrowserWindow
-var NodeHelper = require("node_helper");
-var path = require('path');
+const NodeHelper = require("node_helper");
+const path = require('path');
 var self=null;
+
+
 module.exports = NodeHelper.create({
 							vars: {
 								foo:  "foo",
 								bar: "bar1",
 							},
-							defaults: {
+							config: {
 									"ViewerWidth": 400,
 									"ViewerHeight": 300
 							},
 							ViewerList: [],
 
 						  SCREEN_W : -1,
-							SCREEN_H : -1,							
+							SCREEN_H : -1,
 
 							windowlist : [],
 							refresh_interval : 1,
-							resolvers:{},
 							modules:{'file':null,'DropBox':null,'GoodDrive':null,'OneDrive':null},
 							waiting : false,
-
+							config:{},
+							typePrefix: "://",
 
 							busy : false,
-							loading: false,
+							loading: null,
 
 							timeractve : null,
 
 							init: function(){
-									console.log("handler helper in init");
+									if(this.config.debug) console.log("handler helper in init");
 							},
-					
+
 							start: function(){
-									console.log("handler helper in start");
+									if(this.config.debug) console.log("handler helper in start");
 									self=this
+									var atomScreen  = null
+								/*	if( electron.screen == undefined )
+										atomScreen = electron.remote.screen
+									else
+										atomScreen = electron.screen
+									var mainScreen =atomScreen.getPrimaryDisplay();
+									var dimensions = mainScreen.size;
+									console.log("window size w="+dimensions.width+" h="+dimensions.height); */
 							},
-				
+
 							stop: function(){
-									console.log("handler helper in stop");
+									if(this.config.debug) console.log("handler helper in stop");
 							},
-							
-							
-							
+
+
+
 							remove: function(arr, item) {
 								for (var i = 0; i < arr.length; i++) {
 									if (arr[i] === item) {
-										console.log("item removed ="+i);
+										if(this.config.debug) console.log("item removed ="+i);
 										arr[i].window = null;
 										arr.splice(i, 1);
 										break;
@@ -60,11 +70,11 @@ module.exports = NodeHelper.create({
 								if(viewerList !=null)
 								{
 									for (let v of viewerList) {
-										//console.loglog("checking for viewer="+Name+" in "+ v.Name);
+										if(this.config.debug) console.loglog("checking for viewer="+Name+" in "+ v.Name);
 										if (typeof v != 'undefined' && (v.viewer.Name == Name || v.viewer._id == Name)) {
 											found = v;
 											found.loading=false;
-										//console.log("found active viewer "+Name+" in list");
+										if(this.config.debug) console.log("found active viewer "+Name+" in list");
 										break;
 										}
 									}
@@ -75,34 +85,39 @@ module.exports = NodeHelper.create({
 
 							socketNotificationReceived: function(notification, payload)
 							{
-									console.log("handler helper in socketNotificationReceived");
+									if(this.config.debug) console.log("handler helper in socketNotificationReceived");
 								  console.log("notification="+notification);
-									console.log("payload="+JSON.stringify(payload));
+									if(this.config.debug) console.log("payload="+JSON.stringify(payload));
 									switch(notification)
 									{
+									case 'config':
+									  this.config= payload;
+										this.SCREEN_W=self.config.screen_width;
+									  this.SCREEN_H=self.config.screen_height;
+										break;
 									 case 'sched_init':
-										console.log("sched_init received in handler helper");
+										if(this.config.debug) console.log("sched_init received in handler helper");
 										self.sendSocketNotification(notification+" completed",null);
-										console.log("foo="+self.vars.foo+" bar="+self.vars.bar);
+										if(this.config.debug) console.log("foo="+self.vars.foo+" bar="+self.vars.bar);
 										break;
 
 									 case 'cancel_viewer':
 											self.cancel(payload);
 											self.sendSocketNotification("window_closed",payload);
 											break;
-											
+
 									 case "close_window":
-											
+console.log(" module requested window close")
 											let v=self.viewerRunning(self.ViewerList,payload.Name);
 											if (v.window != null) {
-												// remove any close listeners							
+												// remove any close listeners
 												v.window.removeAllListeners('closed');
 												// close it
 												try {
-													// console.logwarn("closing old window");
+													if(this.config.debug) console.log("closing old window");
 													v.window.close();
 												} catch (e) {
-												// console.logwarn("window close failed="+ex);
+												if(this.config.debug) console.log("window close failed="+ex);
 												}
 											}
 											self.remove(self.ViewerList,v);
@@ -112,7 +127,7 @@ module.exports = NodeHelper.create({
 									 case 'START_VIEWER':
 											self.startViewer(payload);
 										  self.sendSocketNotification("viewer_started", payload);
-										break;										
+										break;
 								}
 							},
 
@@ -137,7 +152,7 @@ module.exports = NodeHelper.create({
 									ydiff: yOverlap
 								};
 							},
-		
+
 							checkWindowOverlap: function(viewerinfo, new_x, new_y) {
 								// setup return value if no changes required
 								let info = {
@@ -153,7 +168,7 @@ module.exports = NodeHelper.create({
 									for (let viewer of self.ViewerList) {
 										// exclude the window we are calculating for
 										if (viewer.window != viewerinfo.window) {
-											// console.logwarn("processing for other window at " +viewer.config.x+","+viewer.config.y);
+											if(this.config.debug) console.log("processing for other window at " +viewer.config.x+","+viewer.config.y);
 											// other window in the list for overlap detection
 											let theirRect = {
 												x: viewer.config.x,
@@ -173,46 +188,46 @@ module.exports = NodeHelper.create({
 												}
 												// get the overlap info, if any
 												let diffs = self.rectOverlap(ourRect, theirRect);
-													// console.logwarn("diffs x="+ diffs.xdiff +" y="+diffs.ydiff)
+													if(this.config.debug) console.log("diffs x="+ diffs.xdiff +" y="+diffs.ydiff)
 													// if there is (either coordiante diff >0 is overlap), attempt to adjust position to prevent overlap
 													if (diffs.xdiff > 0 && diffs.ydiff > 0) {
-														// console.logwarn("windows overlap");
+														if(this.config.debug) console.log("windows overlap");
 														// if 1st or second time thru the loop
 														if (o <= 1) {
-															//console.log("1st time calc");
+															if(this.config.debug) console.log("1st time calc");
 															// adjust x first (left amount to eliminate overlap)
-															if (diffs.xdiff < diffs.ydiff && self.SCREEN_W > self.SCREEN_H) 
-																new_x = Math.max(new_x - diffs.xdiff, 0) 
+															if (diffs.xdiff < diffs.ydiff && self.SCREEN_W > self.SCREEN_H)
+																new_x = Math.max(new_x - diffs.xdiff, 0)
 															else
 																// adjust y (up amount to eliminate overlap)
 																new_y = Math.max(new_y - diffs.ydiff, 0)
 														} else {
-															//console.log("NOT 1st time calc");
+															if(this.config.debug) console.log("NOT 1st time calc");
 															if (o < 10) {
-																//console.log("trying for the "+o+"th time");
+																if(this.config.debug) console.log("trying for the "+o+"th time");
 																// if we tried already twice and are stuck, in the corner at 1/2 window size (x and y)
 																if (new_x < viewerinfo.config.width / 2 && new_y < viewerinfo.config.height / 2) {
 																	// then force a wild change, middle of the screen
 																	new_y = self.SCREEN_H / 2
 																		new_x = self.SCREEN_W / 2
-																	//console.log("new adjustment");
+																	if(this.config.debug) console.log("new adjustment");
 																} else {
 																	// force one dimension to edge)
-																	//console.log("forcing position");
+																	if(this.config.debug) console.log("forcing position");
 																	// already left
 																	if (new_x == 0){
 																		// move up
-																		new_y = 0 
-																		//console.log("force Y position = 0");
+																		new_y = 0
+																		if(this.config.debug) console.log("force Y position = 0");
 																	}
 																	else {
 																		// already up, move left
 																		new_x = 0
-																		//console.log("force X position = 0");
+																		if(this.config.debug) console.log("force X position = 0");
 																	}
 																}
 															} else {
-																//console.log("break out of loop, can't resolve");
+																if(this.config.debug) console.log("break out of loop, can't resolve");
 																changed = false;
 																break;
 															}
@@ -224,10 +239,10 @@ module.exports = NodeHelper.create({
 														}
 														// say we've changed the data from what was provided
 														changed = true
-														//console.log("have new position, recheck");
+														if(this.config.debug) console.log("have new position, recheck");
 													} else {
 														changed = false;
-														//console.log("diffs 0, no overlap ");
+														if(this.config.debug) console.log("diffs 0, no overlap ");
 														// diffs both 0, so no overlap
 														break;
 													}
@@ -244,72 +259,77 @@ module.exports = NodeHelper.create({
 								this.oldwindow=window;
 								this.viewerinfo=viewer;
 							} ,
-					
-							window_loaded:function(c)
+
+							window_loaded:function(viewerinfo)
 							{
-								//console.log("have window to process after load");
-			
+								if(self.config.debug) console.log("have window to process after load");
+
 							//	c.viewerinfo.window.webContents.once('dom-ready', () => {
 								// resize the new window
 								try {
-										console.log("window resize url="+c.viewerinfo.url);
-										c.viewerinfo.window.webContents.executeJavaScript(`if (document.images[0]) {window.resizeTo(Math.min(document.images[0].width,window.innerWidth), Math.min(document.images[0].height,window.innerHeight));}`)
-										/*	.then((result)=>{
-												console.log("javacsript completed result="+result);		
-											})
-											.catch((error)=> {
-												console.log("javascript resize failed="+error);
-											}) */
-//										);	
+										if(self.config.debug) console.log("window resize url="+viewerinfo.url);
+										viewerinfo.window.webContents.executeJavaScript(`if (document.images[0]) {window.resizeTo(Math.min(document.images[0].width,window.innerWidth), Math.min(document.images[0].height,window.innerHeight));}`)
 										// force repaint after resize
-										c.viewerinfo.window.webContents.invalidate();
-								} catch (ex) { 
-										console.log("window resize failed="+ex);
+										viewerinfo.window.webContents.invalidate();
+								} catch (ex) {
+										if(self.config.debug) console.log("window resize failed="+ex);
 								}
 
 
-								//console.log("old window elapsed="+((Date.now()-c.viewerinfo.show)/1000)+" cycle time="+c.viewerinfo.refreshIntervalSeconds);
-								//console.log("showing window now");
+								if(self.config.debug) console.log("old window elapsed="+((Date.now()-viewerinfo.show)/1000)+" cycle time="+viewerinfo.refreshIntervalSeconds);
+								if(self.config.debug) console.log("showing window now");
 
 								// make the window visible
-								c.viewerinfo.show =  Date.now(); //--------- new to find the Date module
-								c.viewerinfo.window.show()
-								c.viewerinfo.loading=false;
-								self.loading=false;
-								c.viewerinfo.lastUpdate = Date.now()  //------ need to find the Date module
+								viewerinfo.show =  Date.now(); //--------- new to find the Date module
+								viewerinfo.window.show()
+								viewerinfo.window.focus()
+								viewerinfo.loading=false;
+								self.loading=null;
+								viewerinfo.lastUpdate = Date.now()  //------ need to find the Date module
 								// if old window exists
-								if (c.oldwindow != null) {
-										//console.log("hiding old window");
-										c.oldwindow.webContents.invalidate();
-										c.oldwindow.hide();
+								if (viewerinfo.oldwindow != null) {
+										if(self.config.debug) console.log("hiding old window");
+										viewerinfo.oldwindow.webContents.invalidate();
+										viewerinfo.oldwindow.hide();
 								}
 								else {
-									//console.log("old window is null");
+									if(self.config.debug) console.log("old window is null");
 									;
 								}
 
 								// if old window exists
-								if (c.oldwindow != null) {
-									// remove any close listeners							
-									c.oldwindow.removeAllListeners('closed');
+								if (viewerinfo.oldwindow != null) {
+									// remove any close listeners
+									viewerinfo.oldwindow.removeAllListeners('closed');
 									// close it
 									try {
-										//console.log("closing old window");
-										c.oldwindow.close();
+										if(self.config.debug) console.log("closing old window");
+										viewerinfo.oldwindow.close();
 									} catch (e) {
-										//console.log("window close failed="+ex);
+										if(self.config.debug) console.log("window close failed="+ex);
 										;
 									}
 								}
-//})
 							},
-					
+							finishload: function (){
+								if(self.config.debug)
+								 console.log("window load completed, viewer="+self.loading.Viewer.Name+" url="+self.loading.url);
+								//loaded(this.c);
+								let t = self.loading
+								self.loading=null;
+								self.windowlist.push(t);
+							},
 							moveWindow:function(image_url, viewerinfo) {
-								
+
 								try {
-									let window = viewerinfo.window;
-									//  get the current window size
-									let winsize = window.getSize();
+									let winsize=[];
+									if(viewerinfo.window){
+										//  get the current window size
+										 winsize = viewerinfo.window.getSize();
+									}
+									else{
+										winsize = [viewerinfo.config.width,viewerinfo.config.height];
+									}
 									// and position
 									//var winpos  = window.getPosition();
 
@@ -328,7 +348,7 @@ module.exports = NodeHelper.create({
 										viewerinfo.dy *= -1;
 									if (new_x <= winsize[0] || new_y >= self.SCREEN_W - winsize[0])
 										viewerinfo.dx *= -1;
-					//console.log("getting window position");
+									if(this.config.debug) console.log("getting window position");
 									// if there other windows we might overlap
 									if (self.ViewerList.length > 1) {
 										// check and adjust the proposed new position to avoid overlap
@@ -336,17 +356,20 @@ module.exports = NodeHelper.create({
 										new_x = info.x;
 										new_y = info.y;
 									}
-					//console.log("have window position");				
+									if(this.config.debug) console.log("have window position");
 									let wconfig = {
 										width: viewerinfo.config.width,
 										height: viewerinfo.config.height,
 										x: new_x,
 										y: new_y
 									}
+									//console.log("window pos info="+JSON.stringify(wconfig))
+
 									// save the config
 									viewerinfo.config = wconfig
 									// get the current window object
 									let oldwindow = viewerinfo.window
+									viewerinfo.window=null;
 
 									// create the window, in new position, hidden
 									viewerinfo.window = new BrowserWindow({
@@ -357,54 +380,48 @@ module.exports = NodeHelper.create({
 										alwaysOnTop: true,
 										show:false,
 										//transparent: true,
-										backgroundColor: '#000000',
+										backgroundColor: "#000000",
 										dx: 0,
 										dy: 0,
 										frame: false,
-										skipTaskbar: true,
-										thickFrame: false 
+										skipTaskbar: true
 									})
-					//console.log("window created");				
-									// load the new image into it									
+									if(this.config.debug) console.log("window created");
+									// load the new image into it
 									viewerinfo.url=image_url;
+									viewerinfo.oldwindow=oldwindow;
 
 									// setup handler for when window is ready to show
-									viewerinfo.window.once('ready-to-show', 	 					
-											function () 
-											{   
-												//console.log("window load completed, window="+this.c.oldwindow+" viewer="+this.c.viewerinfo+" url="+this.c.viewerinfo.url);
-												self.windowlist.push(this.c);						
-												//console.log("window load completed");
-											}.bind({c: new self.worker(oldwindow,viewerinfo)}) 
-									);
+									viewerinfo.window.once('did-finish-load', self.finishload)
+									viewerinfo.window.once("ready-to-show", self.finishload)
 
 									// setup the window close handler
-									viewerinfo.window.on('closed', 
-											function () 
+									viewerinfo.window.on('closed',
+											() =>
 											{
-												//console.log("window removed from list url="+this.c.viewerinfo.url);
-												self.remove(self.ViewerList, this.c.viewerinfo);
-											}.bind({c: new self.worker(oldwindow,viewerinfo)})
+												if(self.config.debug) console.log("window removed from list url="+viewerinfo.url);
+												self.remove(self.ViewerList, viewerinfo);
+											}// .bind({c: new self.worker(oldwindow,viewerinfo)})
 									);
-									viewerinfo.window.webContents.on('crashed', 
-											function (event, killed) 
+									viewerinfo.window.webContents.on('crashed',
+											 (event, killed) =>
 											{
-												//console.log("window crashed");	
-												;											
-											}.bind({c: new self.worker(oldwindow,viewerinfo)})
+												if(self.config.debug) console.log("window crashed");
+												;
+											}// .bind({c: new self.worker(oldwindow,viewerinfo)})
 									);
 
-									
+
 									// save the position info in the viewer
 									viewerinfo.config.x = new_x;
 									viewerinfo.config.y = new_y;
-									self.loading=true;
+									self.loading=viewerinfo
 									viewerinfo.loading=true;
 									viewerinfo.show=Date.now();
-									//console.log("window loading url now="+image_url);
-									viewerinfo.window.loadURL(image_url);
+									if(this.config.debug) console.log("window loading url now="+image_url);
+									viewerinfo.window.loadURL(image_url, {"extraHeaders":"pragma: no-cache\n"});
 								} catch (e) {
-									//console.log("oops window closed on move=" + e)
+									if(this.config.debug) console.log("oops window closed on move=" + e)
 									self.remove(self.ViewerList, viewerinfo)
 								}
 							},
@@ -419,10 +436,9 @@ module.exports = NodeHelper.create({
 							},
 
 							cancel : function (Viewer) {
-								console.log("in close")
+								if(this.config.debug) console.log("in close")
 								let list = self.ViewerList
 									for (let v of list) {
-										//console.log("window " + i)
 										if (Viewer == null ||
 											(Viewer != null &&
 												(
@@ -430,108 +446,91 @@ module.exports = NodeHelper.create({
 													&& v.Viewer.Name == Viewer.Name))) {
 											// if the viewer needs updating
 											if (v.window != null) {
-												//console.log("closing window=" + i)
 												v.window.hide();
-												v.window.close();												
+												v.window.close();
 											} else {
-												//console.log('force remove window=' + i);												
 											}
 											self.remove(self.ViewerList, v)
 											break;
 										}
 									}
 							},
-		
+
 							// timer event handler
 							// get the next image for each viewer
-							updateImg : function () {
+							updateImg : async function () {
 								// check if busy and set if false. (test and set operation)
-								//console.log("in updateImg");
-								if ((self.busy == false) && ( self.busy = true )) {	
+								if(this.config.debug) console.log("in updateImg");
+								if ((self.busy == false) && ( self.busy = true )) {
 									// copy list of viewers
 									let s = self.ViewerList.slice();
-									//if (self.focus != 'sleep') 
+									//if (self.focus != 'sleep')
 									//{
 										// now
 										let now = Date.now();
 										let i=0;
 										// loop thru the list of viewers
 										for (let viewer of s) {
-											//console.log("updateimg checking next image time");
-											//console.log("last update >0="+(viewer.lastUpdate>0)+" refreshinterval="+viewer.refreshIntervalSeconds+" loading="+(self.loading));
+											if(this.config.debug) console.log("updateimg checking next image time");
+											if(this.config.debug) console.log("last update >0="+(viewer.lastUpdate>0)+" refreshinterval="+viewer.refreshIntervalSeconds+" loading="+(self.loading));
 											let lastUpdate=viewer.lastUpdate + (viewer.refreshIntervalSeconds * 1000)
-//console.log("now="+now+" lastupdate="+lastUpdate+" test="+(now > lastUpdate)+" full test="+((viewer.lastUpdate>0) && (now > lastUpdate) && (self.loading==false)))
+											if(this.config.debug) console.log("now="+now+" lastupdate="+lastUpdate+" test="+(now >= lastUpdate)+" full test="+((viewer.lastUpdate>0) && (now > lastUpdate) && (self.loading==null)))
 
 											// if the viewer needs updating
-											if ( (viewer.lastUpdate>0) && (now > lastUpdate) && (self.loading==false)) {
+											if ( (viewer.lastUpdate>0) && (now > lastUpdate) && (self.loading==null)) {
 												// need to update self window
 												// get the next image
-												//console.log("updateimg calling viewer next")
+												if(this.config.debug) console.log("updateimg calling viewer next")
 
 												viewer.lastUpdate=-1;
-												let pic = viewer.Viewer.next(viewer, function (viewerinfo) {
-														//console.log("viewer last update reset");	
-														// if viewer waiting for content									
-														if(viewerinfo.lastUpdate==-1){								
-															//console.log("viewer "+viewerinfo.Viewer.Name+" last update reset");		
-															viewerinfo.lastUpdate=1;
-														}
-													}
-												);
+												let pic = await viewer.Viewer.next(viewer)
+												if(this.config.debug) console.log("viewer last update reset");
 												// and we have a picture, watch out for race
 												if (pic != null) {
-													//console.log("have image to load="+pic);
-													// and load the index.html of the app.
-													// var html = getImageHTML(pic);
-													//console.log("image html="+html);
+													if(this.config.debug) console.log("have image to load="+pic);
 													// load the next image in the new position
 													self.moveWindow(pic, viewer);
 													// set the last updated time, will get corrected when image actualy loads
-													viewer.lastUpdate = now; 
-												} 
+													viewer.lastUpdate = now;
+												}
+												else{
+													if(this.config.debug) console.log("viewer "+viewer.Viewer.Name+" last update reset on null");
+													viewer.lastUpdate=1;
+												}
 											} // end if
-										} // end for					
-									/*} else 
-											{
-										// loop thru the list of viewers
-										for (let v of s) 
-										{
-											if (v.window != null)
-												v.window.hide();
-										}
-									} */
+										} // end for
 									self.busy = false;
 								}	else {
-									//console.log("update img was busy already");
+									if(this.config.debug) console.log("update img was busy already");
 								}
 							}, // end function
 
 							// handle all the windows with LoadURL completed
-							handleLoadComplete:function (){				
-									//console.log(" this == self="+(this===self));
+							handleLoadComplete:function (){
+									if(this.config.debug) console.log(" this == self="+(this===self));
 									// get the active loaded window list
 									let s = self.windowlist;
 									// clear the current list
 									self.windowlist=[];
 									// loop thru the list, if any
-									while(s.length>0) {		
+									while(s.length>0) {
 											// use the 1st entry in the array
 											// note splice returns an array, even if only 1 element
 											let c = s.splice(0,1)[0];
-											//console.log("process window loaded event");
+											if(this.config.debug) console.log("process window loaded event");
 											self.window_loaded(c);
 									}  // end of while loop
 								self.updateImg();
 							},
 
 							startViewer : function (Viewer) {
-								//console.log("starting a new viewer="+Viewer.Name);
+								if(this.config.debug) console.log("starting a new viewer="+Viewer.Name);
 								self.startup("", Viewer)
 							},
 
 							// start a viewer
 							startup: function (location, delay) {
-								console.log("in startup for view="+delay.Name);
+								if(this.config.debug) console.log("in startup for view="+delay.Name);
 								// if we have a url
 								if (location != null) {
 									let refreshdelay = delay
@@ -548,10 +547,11 @@ module.exports = NodeHelper.create({
 											loading:false,
 											index: -1,
 											refreshIntervalSeconds: refreshdelay,
-											lastUpdate: 1
+											lastUpdate: 1,
+											resolvers:{}
 										};
 									// clone viewerinfo from the local object
-									console.log("cloning config info");
+									if(this.config.debug) console.log("cloning config info");
 									viewerinfo = JSON.parse(JSON.stringify(viewerinfo));
 
 									if (typeof delay == 'object') {
@@ -567,11 +567,11 @@ module.exports = NodeHelper.create({
 									// figure out where the window should be, and how big.
 									if (self.SCREEN_W < 0) {
 
-										self.SCREEN_W = self.defaults.ViewerWidth;
-										self.SCREEN_H = self.defaults.ViewerHeight;
+										//self.SCREEN_W = self.config.ViewerWidth;
+										//self.SCREEN_H = self.config.ViewerHeight;
 									}
-									let dx = self.defaults.ViewerWidth;
-									let dy = self.defaults.ViewerHeight;
+									let dx = self.config.ViewerWidth;
+									let dy = self.config.ViewerHeight;
 									let x = (self.random(0, self.SCREEN_W - dx) % (self.SCREEN_W - dx * 2)) + dx;
 									let y = (self.random(self.SCREEN_H - dy, self.SCREEN_H) % (self.SCREEN_H - dy * 2)) + dy;
 									let wconfig = {
@@ -583,7 +583,7 @@ module.exports = NodeHelper.create({
 
 									viewerinfo.config = JSON.parse(JSON.stringify(wconfig));
 										// create the window
-										viewerinfo.window = new BrowserWindow({
+									/*	viewerinfo.window = new BrowserWindow({
 											width: dx,
 											height: dy,
 											x: x,
@@ -596,15 +596,16 @@ module.exports = NodeHelper.create({
 											frame: false,
 											skipTaskbar: true,
 											//webPreferences:{devTools:true}
-										})
+										}) */
 										self.ViewerList.push(viewerinfo);
-	
+
 								}
 								// cycle minimum = 5 seconds
 								// only do self once
 								if (self.timeractve==null) {
-									console.log("setup timer handler");
+									if(this.config.debug) console.log("setup timer handler");
 									self.registerRefreshInterval(self.handleLoadComplete, self.refresh_interval * 5000);
+
 									//timeractve = true
 								}
 							},
@@ -615,7 +616,7 @@ module.exports = NodeHelper.create({
 
 							registerRefreshInterval : function (callback, interval) {
 								if (typeof interval !== 'undefined') {
-									console.log("calling set interval");
+									if(this.config.debug) console.log("calling set interval");
 									self.timeractive=setInterval(function(){callback()}.bind(self),interval);
 								}
 							},
@@ -624,55 +625,83 @@ module.exports = NodeHelper.create({
 							},
 							rand:function() {
 								return self.random(0, 32767);
-							},					
+							},
 
-		filelist_callback: function (viewerinfo, callback) {
-			 //console.log("in file list callback for viewer=" + viewerinfo.Viewer.Name);
-
+		filelist_callback: async function (viewerinfo) {
+			if(this.config.debug) console.log("in file list for viewer=" + viewerinfo.Viewer.Name);
+			viewerinfo.promises=[]
 			// copy items list
 			let items=viewerinfo.Viewer.items.slice();
-			// loop thru all the file items			
+			// loop thru all the file items
 			items.forEach(
 				function (ImageItem) {
-					// if the handlers haven't been loaded yet
-					if(self.modules[ImageItem.Source.Type.Type]==null)
-					{
+					let prefix=null
+
+					if(self.modules[ImageItem.Source.Type.Type]==null){
 						// load them
 						self.modules[ImageItem.Source.Type.Type]=require(path.resolve(__dirname, 'image'+ImageItem.Source.Type.Type+'.js'));
-						self.resolvers[self.modules[ImageItem.Source.Type.Type].getPrefix()]=self.modules[ImageItem.Source.Type.Type];
+						prefix=self.modules[ImageItem.Source.Type.Type].getPrefix()
 					}
-					// if the handler for this source type has been loaded
-				  if(self.modules[ImageItem.Source.Type.Type]!=null)
-					{
-							// call it to get the file list
-							//console.log("calling handler for type="+ImageItem.Source.Type.Type);
+					else{
+						if(this.config.debug) console.log("in file list handler already loaded for viewer=" + viewerinfo.Viewer.Name);
+						prefix=self.modules[ImageItem.Source.Type.Type].getPrefix()
+					}
+					if(typeof viewerinfo.resolvers[prefix] == 'undefined')
+						viewerinfo.resolvers[prefix]={module:self.modules[ImageItem.Source.Type.Type],ImageItem:ImageItem }
 
-							self.modules[ImageItem.Source.Type.Type].listImageFiles(ImageItem,viewerinfo, callback)
-					}							
+					// if the handler for this source type has been loaded
+				  if(viewerinfo.resolvers[prefix].module!=null){
+						// call it to get the file list
+						viewerinfo.promises.push(
+							viewerinfo.resolvers[prefix].module.listImageFiles(ImageItem,viewerinfo)
+						)
+						if(self.config.debug) console.log("back from get file list, count="+viewerinfo.images.found.length);
+					}
 			});
-			// console.log("done in file list callback for viewer=" + viewerinfo.Viewer.Name);
+			if(viewerinfo.promises.length>0){
+				try{
+					await Promise.all(viewerinfo.promises)
+				}
+				catch(error){
+					throw("promise all error="+error.message); // some coding error in handling happened
+				}
+			}
+			if(this.config.debug) console.log("done in file list for viewer=" + viewerinfo.Viewer.Name);
+			return(viewerinfo);
 		},
 
-		Next: function (viewerinfo, callback) {
+		getShuffledArr: function(arr){
+			const newArr = arr.slice()
+			for (let i = newArr.length - 1; i > 0; i--) {
+					const rand = Math.floor(Math.random() * (i + 1));
+					[newArr[i], newArr[rand]] = [newArr[rand], newArr[i]];
+			}
+			return newArr
+		},
+		 Next: async function (viewerinfo) {
 			let imageUrl = null;
-
+			if(this.config.debug) console.log("in Next");
 			if (viewerinfo != null) {
 				// if the next pic would be beyond the end of list
 				if (viewerinfo.index == -1 || (viewerinfo.images.found.length > 0 && viewerinfo.index >= viewerinfo.images.found.length)) {
 					// reset the index
 					viewerinfo.index = 0;
 					// clear the list of images
-					// console.log("clearing image list for viewer="+viewerinfo.Viewer.Name);
+					if(this.config.debug) console.log("clearing image list for viewer="+viewerinfo.Viewer.Name);
 					viewerinfo.images.found = []
 					// watch out for updated list of images
-					// console.log("getting images for viewer="+viewerinfo.Viewer.Name);					
-					self.filelist_callback(viewerinfo, function(){ 
-						callback(viewerinfo)
-					});
-					// console.log("returned from get images for viewer="+viewerinfo.Viewer.Name);
+					if(this.config.debug) console.log("getting images for viewer="+viewerinfo.Viewer.Name);
+					await self.filelist_callback(viewerinfo)//, function(){ 				callback(viewerinfo)					});
+					if(this.config.debug) console.log("Back from filelist, count="+viewerinfo.images.found.length);
+					viewerinfo.images.found=self.getShuffledArr(viewerinfo.images.found)
+						// indicate we are not loading images any longer
+					viewerinfo.loadingImages = false;
+					self.waiting=false;
+					viewerinfo.lastUpdate=1;
+					if(this.config.debug) console.log("returned from get images for viewer="+viewerinfo.Viewer.Name);
 				}
 				// send back the next image
-				//console.log("image count="+viewerinfo.images.found.length+" and index="+viewerinfo.index)
+				if(this.config.debug) console.log("image count="+viewerinfo.images.found.length+" and index="+viewerinfo.index)
 
 				if (viewerinfo.images.found.length > 0 && viewerinfo.index>=0 ) {
 					// if the next image was loaded from the complex service
@@ -682,56 +711,38 @@ module.exports = NodeHelper.create({
 					} else {
 						// make sure to increment the index for the next file later
 						let file = viewerinfo.images.found[viewerinfo.index];
-						//console.log("=====>waiting="+self.waiting)
+						if(self.config.debug) console.log("=====>waiting="+self.waiting)
 						if(self.waiting ==false){
-							//console.log("Next has file="+file);
-							if(file.includes('://'))
+							if(self.config.debug) console.log("Next has file="+file);
+							if(file.includes(this.typePrefix))
 							{
-								if(!file.startsWith("http") && !file.startsWith("file"))
+								let prefix= file.substring(0,file.indexOf(this.typePrefix)+this.typePrefix.length)
+								if(!file.startsWith("http") && !file.startsWith("file") && viewerinfo.resolvers[prefix]!=null)
 								{
-									let f= file.substring(0,file.indexOf('//')+2)
-									//console.log("Next resolving image name="+file+ "for viewer="+viewerinfo.Viewer.Name+" with prefix="+f);
-									if(self.resolvers[f]!=null)
-									{
-										if(self.waiting == false){
-											//console.log("Next, needs to be resolved, file="+file)
-											self.waiting=true;
-											self.resolvers[f].resolve(file, 
-												function (err,resolvedFile)
-												{
-													if(err==null)
-													{
-														// save the resolved filename
-														this.vinfo.images.found[this.vinfo.index]=resolvedFile;
-														//console.log("resolver for " + this.vinfo.Viewer.Name +" returned "+ resolvedFile);
-													}
-													else
-													{
-														//console.log("resolver for " + this.vinfo.Viewer.Name + " reported error="+err)
-														;
-													}
-													// tell the viewer next time around, that the file is usable
-													self.waiting=false;
-													callback(this.vinfo);
-													//console.log("=====>callback waiting="+self.waiting)
-												}.bind({vinfo: viewerinfo})
-											)
+									if(self.config.debug) console.log("Next resolving image name="+file+ "for viewer="+viewerinfo.Viewer.Name+" with prefix="+prefix);
+									if((self.waiting == false) & (self.waiting=true)){
+										if(self.config.debug) console.log("Next, needs to be resolved, file="+file)
+										try {
+											imageUrl=await viewerinfo.resolvers[prefix].module.resolve(file,viewerinfo.resolvers[prefix].ImageItem) //,
+											if(self.config.debug) console.log("Next, file resolved, file="+imageUrl)
+											// save the resolved filename, so we don't resolve again
+											viewerinfo.images.found[viewerinfo.index] = imageUrl
+											viewerinfo.index++;
 										}
-									}
-									else{
-										//console.log("Next for viewer="+viewerinfo.Viewer.Name + " returning returning filename="+file);
-										imageUrl = file
-										viewerinfo.index++;
+										catch(error){
+											console.log("resolver error ="+error.message)
+										}
+										self.waiting=false;
 									}
 								}
 								else {
-									//console.log("Next for viewer="+viewerinfo.Viewer.Name + " returning http resolved filename="+file);
+									if(this.config.debug) console.log("Next for viewer="+viewerinfo.Viewer.Name + " returning http resolved filename="+file);
 									imageUrl = file
 									viewerinfo.index++;
 								}
-							} 
+							}
 							else {
-								//console.log("unexpected file type:"+file);
+								if(this.config.debug) console.log("unexpected file type:"+file);
 							}
 						}
 					}

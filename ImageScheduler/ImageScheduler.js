@@ -85,9 +85,9 @@ Module.register("ImageScheduler",{
 												{
                  				   Log.log("initialize node helper pointer");
 										
-													 MM.getModules().withClass('ImageService').enumerate(function(module) 
+													 MM.getModules().enumerate(function(module) 
 													 {
-													 		if(module.name ==='ImageService')
+													 		if(module.name.includes('ImageService'))
 															{
     														Log.log(module.name);
 																ImageService=module;
@@ -215,6 +215,7 @@ Module.register("ImageScheduler",{
 
 
 		processEvents: function (filtered_events) {
+			console.log("getting calendar entries");
 			if (this.pebusy == false) {
 				this.pebusy = true;
 				let data=this.getData();
@@ -287,7 +288,11 @@ Module.register("ImageScheduler",{
 						// one is running
 						if (needed == false && running != null  && running.loading==false) {
 							// stop it
-							ImageService.cancel(Viewer);
+							try {
+								ImageService.cancel(Viewer);
+							}
+							catch(error){
+							}
 						}
 					}
 				}

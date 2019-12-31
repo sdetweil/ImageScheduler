@@ -24,12 +24,13 @@ Module.register("ImageService",{
 							start: function(){
 									Log.log("Handler in start");
 									self=this;
+									this.sendSocketNotification("config", this.config);
 							},
 
 							getScripts: function(){
 									Log.log("Handler in getScripts");
 									return [
-										'moment.js', // this file is available in the vendor folder, so it doesn't need to be available in the module folder.
+										'moment.js' // this file is available in the vendor folder, so it doesn't need to be available in the module folder.
 									]
 							},
 							
@@ -68,7 +69,7 @@ Module.register("ImageService",{
 													 Log.log("sender="+sender);
                  				   Log.log("initialize node helper pointer");
 										
-													 MM.getModules().withClass('ImageScheduler').enumerate(function(module) 
+													 MM.getModules().enumerate(function(module) 
 													 {
 													 		if(module.name ==='ImageScheduler')
 															{

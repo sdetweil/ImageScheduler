@@ -1,0 +1,20 @@
+{
+  "name": "imageservice",
+  "version": "1.0.0",
+  "description": "image loadert and displayer",
+  "main": "ImageService.js",
+  "scripts": {
+    "test": "none"
+  },
+  "author": "sam detweiler",
+  "license": "ISC",
+  "dependencies": {
+    "dropbox": "4.0.28",
+    "electron-unhandled": "^3.0.1",
+    "google-auth-library": "^4.2.0",
+    "googleapis": "^40.0.0",
+    "isomorphic-fetch": "^2.2.1",
+    "mongodb": "^2.2.11",
+    "open": "^7.0.0"
+  }
+}

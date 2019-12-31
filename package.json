@@ -1,0 +1,20 @@
+{
+  "name": "imagescheduler",
+  "version": "1.0.0",
+  "description": "calendar based image viewer",
+  "main": "Gruntfile.js",
+  "scripts": {
+    "test": "none",
+    "install": "(cd ImageScheduler && npm install)  && (cd ImageService && npm install)"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sdetweil/ImageScheduler.git"
+  },
+  "author": "sam detweiler",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sdetweil/ImageScheduler/issues"
+  },
+  "homepage": "https://github.com/sdetweil/ImageScheduler#readme"
+}

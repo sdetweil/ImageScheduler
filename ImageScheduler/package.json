@@ -1,0 +1,25 @@
+{
+  "name": "imagescheduler",
+  "version": "1.0.0",
+  "description": "calendar image selector/scheduler",
+  "main": "ImageScheduler.js",
+  "scripts": {
+    "test": "none"
+  },
+  "dependencies": {
+    "connect": "^3.7.0",
+    "electron": "^3.0.13",
+    "electron-log": "^1.0.0",
+    "electron-unhandled": "^3.0.1",
+    "http": "0.0.0",
+    "https": "^1.0.0",
+    "js-yaml": "^3.13.1",
+    "mongo-watch": "^0.2.8",
+    "mongodb": "^2.2.11",
+    "open": "^7.0.0",
+    "querystring": "^0.2.0",
+    "swagger-tools": "^0.10.4"
+  },
+  "author": "sam detweiler",
+  "license": "ISC"
+}
