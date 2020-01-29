@@ -115,10 +115,12 @@ Module.register("ImageService",{
 
 							suspend: function(){
 									Log.log("in suspend");
+									this.sendSocketNotification("SUSPEND")
 							},
 
 							resume: function(){
 									Log.log("in resume");
+									this.sendSocketNotification("RESUME")
 							},
 							startViewer: function(Viewer)
 							{

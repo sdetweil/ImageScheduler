@@ -13,40 +13,46 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo) {
 	//return  new Promise((resolve,reject) =>{
 		// calculate uri for file(s)
 		let url1 = ImageItem.Source.Root + (ImageItem.Image.PathFromSource.startsWith("/")?"":"/")+ ImageItem.Image.PathFromSource
-    // if its not a directory
-		if(fs.statSync(url1).isDirectory()){
-			// if it does NOT have a wildcard)
-			if(url1.indexOf("*")<0){
-				// add one
-				url1+="/*";
+		try {
+			// if its not a directory
+			if(fs.statSync(url1).isDirectory()){
+				// if it does NOT have a wildcard)
+				if(url1.indexOf("*")<0){
+					// add one
+					url1+="/*";
+				}
 			}
+			else {
+				if(url1.indexOf("*")<0){
+						viewerinfo.images.found.push(url1);
+						// is this a file or folder? if folder, then make it a glob string and redo
+						return
+				}		
+			}
+			glob(url1, { nocase: true, absolute: true},
+			 (err, files) =>{
+				 if(!err){
+				// put all the files on the viewers list
+					files.forEach((file) => {
+						//console.log("adding image for viewer = "+this.b.Viewer.Name+"="+Prefix+file);
+						if(file.toLowerCase().endsWith('.jpg') || file.toLowerCase().endsWith('.png') || file.toLowerCase().endsWith('.gif'))
+							viewerinfo.images.found.push(Prefix+file)
+					});
+					// let the viewer know we have files
+					console.log(" File handler done with glob list, count="+viewerinfo.images.found.length)
+					return 
+				 }
+				 else{
+					 console.log("file type listImageFiles, glob error="+err+" file="+url1)
+					 return
+				 }
+					 
+			});
 		}
-		else {
-			if(url1.indexOf("*")<0){
-					viewerinfo.images.found.push(url1);
-					// is this a file or folder? if folder, then make it a glob string and redo
-					return
-			}		
+		catch(error){
+			console.log("url error="+error.message);
+			return;
 		}
-		glob(url1, { nocase: true, absolute: true},
-		 (err, files) =>{
-			 if(!err){
-			// put all the files on the viewers list
-				files.forEach((file) => {
-					//console.log("adding image for viewer = "+this.b.Viewer.Name+"="+Prefix+file);
-					if(file.toLowerCase().endsWith('.jpg') || file.toLowerCase().endsWith('.png') || file.toLowerCase().endsWith('.gif'))
-						viewerinfo.images.found.push(Prefix+file)
-				});
-				// let the viewer know we have files
-				console.log(" File handler done with glob list, count="+viewerinfo.images.found.length)
-			  return 
-			 }
-			 else{				 
-				 console.log("file type listImageFiles, glob error="+err+" file="+url1)
-				 reject();
-			 }
-				 
-		});
 	//})
 
 }

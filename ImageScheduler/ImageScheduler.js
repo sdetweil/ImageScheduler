@@ -72,11 +72,12 @@ Module.register("ImageScheduler",{
 							},
 
 							notificationReceived: function(notification, payload, sender){
+									if(self1.config.debug){
 									Log.log("scheduler in notificationReceived");
 								  Log.log("notification='"+notification+"'");
 									Log.log("sender="+sender);
-									if(self1.config.debug)
 										Log.log("payload="+JSON.stringify(payload));
+									}
 									switch(notification) 
 									{									
 										case 'ALL_MODULES_STARTED':												
@@ -107,10 +108,11 @@ Module.register("ImageScheduler",{
 							},
 
 							socketNotificationReceived: function(notification, payload){
-									Log.log("scheduler in socketNotificationReceived");
-								  Log.log("notification="+notification);
-									if(self1.config.debug)
+								  if(self1.config.debug){
+										Log.log("scheduler in socketNotificationReceived");
+										Log.log("notification="+notification);
 										Log.log("payload="+JSON.stringify(payload));
+									}
 									switch(notification) 
 									{									
 										case "db data":

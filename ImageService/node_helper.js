@@ -7,7 +7,7 @@ var self=null;
 
 module.exports = NodeHelper.create({
 							vars: {
-								foo:  "foo",
+								foo:	"foo",
 								bar: "bar1",
 							},
 							config: {
@@ -16,7 +16,7 @@ module.exports = NodeHelper.create({
 							},
 							ViewerList: [],
 
-						  SCREEN_W : -1,
+							SCREEN_W : -1,
 							SCREEN_H : -1,
 
 							windowlist : [],
@@ -25,6 +25,7 @@ module.exports = NodeHelper.create({
 							waiting : false,
 							config:{},
 							typePrefix: "://",
+							suspended: false,
 
 							busy : false,
 							loading: null,
@@ -38,7 +39,7 @@ module.exports = NodeHelper.create({
 							start: function(){
 									if(this.config.debug) console.log("handler helper in start");
 									self=this
-									var atomScreen  = null
+									var atomScreen	= null
 								/*	if( electron.screen == undefined )
 										atomScreen = electron.remote.screen
 									else
@@ -86,14 +87,14 @@ module.exports = NodeHelper.create({
 							socketNotificationReceived: function(notification, payload)
 							{
 									if(this.config.debug) console.log("handler helper in socketNotificationReceived");
-								  console.log("notification="+notification);
+									console.log("notification="+notification);
 									if(this.config.debug) console.log("payload="+JSON.stringify(payload));
 									switch(notification)
 									{
 									case 'config':
-									  this.config= payload;
+										this.config= payload;
 										this.SCREEN_W=self.config.screen_width;
-									  this.SCREEN_H=self.config.screen_height;
+										this.SCREEN_H=self.config.screen_height;
 										break;
 									 case 'sched_init':
 										if(this.config.debug) console.log("sched_init received in handler helper");
@@ -107,7 +108,7 @@ module.exports = NodeHelper.create({
 											break;
 
 									 case "close_window":
-console.log(" module requested window close")
+											//console.log(" module requested window close")
 											let v=self.viewerRunning(self.ViewerList,payload.Name);
 											if (v.window != null) {
 												// remove any close listeners
@@ -126,8 +127,12 @@ console.log(" module requested window close")
 
 									 case 'START_VIEWER':
 											self.startViewer(payload);
-										  self.sendSocketNotification("viewer_started", payload);
+											self.sendSocketNotification("viewer_started", payload);
 										break;
+									 case 'SUSPEND':
+									 case 'RESUME':
+											self.hideShowWindow(notification);
+										 break;
 								}
 							},
 
@@ -280,12 +285,14 @@ console.log(" module requested window close")
 								if(self.config.debug) console.log("showing window now");
 
 								// make the window visible
-								viewerinfo.show =  Date.now(); //--------- new to find the Date module
-								viewerinfo.window.show()
-								viewerinfo.window.focus()
+								viewerinfo.show =	 Date.now(); //--------- new to find the Date module
+								if(!this.suspended){
+									viewerinfo.window.show()
+									viewerinfo.window.focus()
+								}
 								viewerinfo.loading=false;
 								self.loading=null;
-								viewerinfo.lastUpdate = Date.now()  //------ need to find the Date module
+								viewerinfo.lastUpdate = Date.now()	//------ need to find the Date module
 								// if old window exists
 								if (viewerinfo.oldwindow != null) {
 										if(self.config.debug) console.log("hiding old window");
@@ -324,14 +331,14 @@ console.log(" module requested window close")
 								try {
 									let winsize=[];
 									if(viewerinfo.window){
-										//  get the current window size
+										//	get the current window size
 										 winsize = viewerinfo.window.getSize();
 									}
 									else{
 										winsize = [viewerinfo.config.width,viewerinfo.config.height];
 									}
 									// and position
-									//var winpos  = window.getPosition();
+									//var winpos	= window.getPosition();
 
 									// calculate new window position
 									let new_x = (self.rand() % (self.SCREEN_W - winsize[0] * 2)) + winsize[0];
@@ -456,6 +463,24 @@ console.log(" module requested window close")
 									}
 							},
 
+							hideShowWindow: function(type){
+								this.suspended=(type=="SUSPEND")?true:false
+								let list = self.ViewerList
+									for (let v of list) {
+										if (v.window != null) {
+											switch(type){
+												case "RESUME":
+													 v.window.show();
+													 v.window.focus();
+												break
+												case "SUSPEND":
+													v.window.hide();
+												break;
+											}
+										}
+									}
+							},
+
 							// timer event handler
 							// get the next image for each viewer
 							updateImg : async function () {
@@ -519,8 +544,9 @@ console.log(" module requested window close")
 											let c = s.splice(0,1)[0];
 											if(this.config.debug) console.log("process window loaded event");
 											self.window_loaded(c);
-									}  // end of while loop
-								self.updateImg();
+									}	 // end of while loop
+								if(!this.suspended)
+									self.updateImg();
 							},
 
 							startViewer : function (Viewer) {
@@ -650,7 +676,7 @@ console.log(" module requested window close")
 						viewerinfo.resolvers[prefix]={module:self.modules[ImageItem.Source.Type.Type],ImageItem:ImageItem }
 
 					// if the handler for this source type has been loaded
-				  if(viewerinfo.resolvers[prefix].module!=null){
+					if(viewerinfo.resolvers[prefix].module!=null){
 						// call it to get the file list
 						viewerinfo.promises.push(
 							viewerinfo.resolvers[prefix].module.listImageFiles(ImageItem,viewerinfo)
@@ -691,7 +717,7 @@ console.log(" module requested window close")
 					viewerinfo.images.found = []
 					// watch out for updated list of images
 					if(this.config.debug) console.log("getting images for viewer="+viewerinfo.Viewer.Name);
-					await self.filelist_callback(viewerinfo)//, function(){ 				callback(viewerinfo)					});
+					await self.filelist_callback(viewerinfo)//, function(){					callback(viewerinfo)					});
 					if(this.config.debug) console.log("Back from filelist, count="+viewerinfo.images.found.length);
 					viewerinfo.images.found=self.getShuffledArr(viewerinfo.images.found)
 						// indicate we are not loading images any longer
