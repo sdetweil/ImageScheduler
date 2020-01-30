@@ -127,6 +127,7 @@ module.exports = NodeHelper.create({
 											break;
 
 									 case 'START_VIEWER':
+											console.log(" viewer starting name="+payload.Name);									 
 											self.startViewer(payload);
 											self.sendSocketNotification("viewer_started", payload);
 										break;
