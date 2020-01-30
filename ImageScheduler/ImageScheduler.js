@@ -217,6 +217,7 @@ Module.register("ImageScheduler",{
 
 
 		processEvents: function (filtered_events) {
+			let starting={}
 			console.log("getting calendar entries");
 			if (this.pebusy == false){
 				this.pebusy = true;
@@ -260,17 +261,20 @@ Module.register("ImageScheduler",{
 									running = this.viewerRunning(ImageService.getViewers(), Viewer.Name);
 									// if this viewer is not already running
 									if (running == null) {
-										Viewer.items = activeitems.slice();
-										// start a viewer
-										Viewer.callback = this.filelist_callback;
-										Viewer.next = function (x, y) {
-											return this.Next(x, y);
-										};
-										ImageService.startViewer(Viewer)
-										if(self1.config.debug)
-											Log.log("starting viewer Name="+Viewer.Name);
+										if(!starting.hasOwnProperty(Viewer.Name)){
 
-										running = 1;
+											Viewer.items = activeitems.slice();
+											// start a viewer
+											Viewer.callback = this.filelist_callback;
+											Viewer.next = function (x, y) {
+												return this.Next(x, y);
+											};
+											starting[Viewer.Name]=Viewer;
+											ImageService.startViewer(Viewer)
+											if(self1.config.debug)
+												Log.log("starting viewer Name="+Viewer.Name);
+											running = 1;
+										}
 										i = tagentries.length // end the loop for this viewer
 									} else {
 										try {
