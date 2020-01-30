@@ -16,7 +16,7 @@ var dgram = require('dgram');
 
 var NodeHelper = require("node_helper");
 var MongoClient = require('mongodb').MongoClient;
-var e2c = require('electron-to-chromium');
+//var e2c = require('electron-to-chromium');
 const path = require('path');
 // var file=require('file');
 var MongoWatch = require('mongo-watch')

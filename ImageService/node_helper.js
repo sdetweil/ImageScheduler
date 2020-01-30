@@ -485,7 +485,7 @@ module.exports = NodeHelper.create({
 							// get the next image for each viewer
 							updateImg : async function () {
 								// check if busy and set if false. (test and set operation)
-								if(this.config.debug) console.log("in updateImg");
+								if(self.config.debug) console.log("in updateImg");
 								if ((self.busy == false) && ( self.busy = true )) {
 									// copy list of viewers
 									let s = self.ViewerList.slice();
@@ -496,37 +496,37 @@ module.exports = NodeHelper.create({
 										let i=0;
 										// loop thru the list of viewers
 										for (let viewer of s) {
-											if(this.config.debug) console.log("updateimg checking next image time");
-											if(this.config.debug) console.log("last update >0="+(viewer.lastUpdate>0)+" refreshinterval="+viewer.refreshIntervalSeconds+" loading="+(self.loading));
+											if(self.config.debug) console.log("updateimg checking next image time");
+											if(self.config.debug) console.log("last update >0="+(viewer.lastUpdate>0)+" refreshinterval="+viewer.refreshIntervalSeconds+" loading="+(self.loading));
 											let lastUpdate=viewer.lastUpdate + (viewer.refreshIntervalSeconds * 1000)
-											if(this.config.debug) console.log("now="+now+" lastupdate="+lastUpdate+" test="+(now >= lastUpdate)+" full test="+((viewer.lastUpdate>0) && (now > lastUpdate) && (self.loading==null)))
+											if(self.config.debug) console.log("now="+now+" lastupdate="+lastUpdate+" test="+(now >= lastUpdate)+" full test="+((viewer.lastUpdate>0) && (now > lastUpdate) && (self.loading==null)))
 
 											// if the viewer needs updating
 											if ( (viewer.lastUpdate>0) && (now > lastUpdate) && (self.loading==null)) {
 												// need to update self window
 												// get the next image
-												if(this.config.debug) console.log("updateimg calling viewer next")
+												if(self.config.debug) console.log("updateimg calling viewer next")
 
 												viewer.lastUpdate=-1;
 												let pic = await viewer.Viewer.next(viewer)
-												if(this.config.debug) console.log("viewer last update reset");
+												if(self.config.debug) console.log("viewer last update reset");
 												// and we have a picture, watch out for race
 												if (pic != null) {
-													if(this.config.debug) console.log("have image to load="+pic);
+													if(self.config.debug) console.log("have image to load="+pic);
 													// load the next image in the new position
 													self.moveWindow(pic, viewer);
 													// set the last updated time, will get corrected when image actualy loads
 													viewer.lastUpdate = now;
 												}
 												else{
-													if(this.config.debug) console.log("viewer "+viewer.Viewer.Name+" last update reset on null");
+													if(self.config.debug) console.log("viewer "+viewer.Viewer.Name+" last update reset on null");
 													viewer.lastUpdate=1;
 												}
 											} // end if
 										} // end for
 									self.busy = false;
 								}	else {
-									if(this.config.debug) console.log("update img was busy already");
+									if(self.config.debug) console.log("update img was busy already");
 								}
 							}, // end function
 

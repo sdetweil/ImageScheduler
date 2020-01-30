@@ -218,7 +218,7 @@ Module.register("ImageScheduler",{
 
 		processEvents: function (filtered_events) {
 			console.log("getting calendar entries");
-			if (this.pebusy == false) {
+			if (this.pebusy == false){
 				this.pebusy = true;
 				let data=this.getData();
 				if(self1.config.debug)
@@ -231,7 +231,7 @@ Module.register("ImageScheduler",{
 						let tagentries=this.tagsfromids(Viewer.Tags)									
 						let needed = false
 						// is a viewer of this name running already
-						let running = this.viewerRunning(ImageService.getViewers(), Viewer.Name);
+						let running = null
 						for (var i = 0; i < filtered_events.length && needed == false; i++) {
 														
 							// get the cal entry summary
@@ -257,6 +257,7 @@ Module.register("ImageScheduler",{
 									}
 								}
 								if (activeitems.length) {
+									running = this.viewerRunning(ImageService.getViewers(), Viewer.Name);
 									// if this viewer is not already running
 									if (running == null) {
 										Viewer.items = activeitems.slice();
