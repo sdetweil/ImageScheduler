@@ -24,7 +24,7 @@ Module.register("ImageService",{
 							start: function(){
 									Log.log("Handler in start");
 									self=this;
-									this.sendSocketNotification("config", this.config);
+
 							},
 
 							getScripts: function(){
@@ -78,6 +78,9 @@ Module.register("ImageService",{
 																self.sendSocketNotification("sched_init", ImageScheduler);
 											  			}
 														});
+														this.config.screen_width=window.innerWidth;
+														this.config.screen_height=window.innerHeight;
+														this.sendSocketNotification("config", this.config);
 												}
 										break;
 										default:

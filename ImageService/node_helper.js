@@ -95,6 +95,7 @@ module.exports = NodeHelper.create({
 										this.config= payload;
 										this.SCREEN_W=self.config.screen_width;
 										this.SCREEN_H=self.config.screen_height;
+										console.log("width="+this.config.screen_width+" height="+this.config.screen_height)
 										break;
 									 case 'sched_init':
 										if(this.config.debug) console.log("sched_init received in handler helper");
