@@ -30,7 +30,7 @@ Module.register("ImageScheduler",{
 							init: function(){
 									Log.log("scheduler in init");
 							},
-					
+
 							loaded: function(callback){
 									Log.log("scheduler in loaded");
 									callback();
@@ -48,7 +48,7 @@ Module.register("ImageScheduler",{
 									]
 									return [];
 							},
-							
+
 							getStyles: function(){
 									Log.log("scheduler in getStyles");
 									return [];
@@ -78,15 +78,15 @@ Module.register("ImageScheduler",{
 									Log.log("sender="+sender);
 										Log.log("payload="+JSON.stringify(payload));
 									}
-									switch(notification) 
-									{									
-										case 'ALL_MODULES_STARTED':												
+									switch(notification)
+									{
+										case 'ALL_MODULES_STARTED':
 												self1.sendSocketNotification("sched_init", self1.config);
 												if(ImageService==null)
 												{
                  				   Log.log("initialize node helper pointer");
-										
-													 MM.getModules().enumerate(function(module) 
+
+													 MM.getModules().enumerate(function(module)
 													 {
 													 		if(module.name.includes('ImageService'))
 															{
@@ -113,8 +113,8 @@ Module.register("ImageScheduler",{
 										Log.log("notification="+notification);
 										Log.log("payload="+JSON.stringify(payload));
 									}
-									switch(notification) 
-									{									
+									switch(notification)
+									{
 										case "db data":
 												this.dbData=JSON.parse(payload);
 												if(self1.config.debug)
@@ -178,7 +178,7 @@ Module.register("ImageScheduler",{
 		},
 		containsAny:function (str, Tags) {
 			var results = []
-			for (let tag of Tags) {				
+			for (let tag of Tags) {
 				 //Log.log("looking for " + tag.value +" in "+str);
 				if (str.toLowerCase().indexOf(tag.value.toLowerCase()) !=  - 1) {
 					 //Log.log("found tag="+tag.value);
@@ -229,16 +229,16 @@ Module.register("ImageScheduler",{
 						//// Log.log(Viewer);
 						if(self1.config.debug)
 							Log.log("there are " + filtered_events.length + " entries in the selected cal entry data")
-						let tagentries=this.tagsfromids(Viewer.Tags)									
+						let tagentries=this.tagsfromids(Viewer.Tags)
 						let needed = false
 						// is a viewer of this name running already
 						let running = null
 						for (var i = 0; i < filtered_events.length && needed == false; i++) {
-														
+
 							// get the cal entry summary
 							var cal_entry_text = filtered_events[i].title;
 							// find any matching viewer tags in the summary
-							var tags = this.containsAny(cal_entry_text, tagentries); 
+							var tags = this.containsAny(cal_entry_text, tagentries);
 							// if we found some tags
 							if (tags.length > 0) {
 								//// Log.log(filtered_events[i]);
@@ -282,7 +282,7 @@ Module.register("ImageScheduler",{
 												Log.log("updating viewer items list");
 											// reset the images the viewer should do
 											running.Viewer.items = activeitems.slice();
-										} catch (ex) 
+										} catch (ex)
 										{
 											// no exception allowed
 										}
