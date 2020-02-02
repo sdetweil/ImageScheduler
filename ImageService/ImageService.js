@@ -18,7 +18,7 @@ Module.register("ImageService",{
 							},
 
 							getViewers: function(){
-									return this.ViewerList;
+									return self.ViewerList;
 							},
 
 							start: function(){

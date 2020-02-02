@@ -262,7 +262,7 @@ Module.register("ImageScheduler",{
 									// if this viewer is not already running
 									if (running == null) {
 										if(!starting.hasOwnProperty(Viewer.Name)){
-
+											Log.log("viewer for "+Viewer.Name+" not yet started");
 											Viewer.items = activeitems.slice();
 											// start a viewer
 											Viewer.callback = this.filelist_callback;
@@ -270,11 +270,13 @@ Module.register("ImageScheduler",{
 												return this.Next(x, y);
 											};
 											starting[Viewer.Name]=Viewer;
-											ImageService.startViewer(Viewer)
-											if(self1.config.debug)
+											//if(self1.config.debug)
 												Log.log("starting viewer Name="+Viewer.Name);
+											ImageService.startViewer(Viewer)											
 											running = 1;
 										}
+										else
+											Log.log("viewer for "+Viewer.Name+" was already started");
 										i = tagentries.length // end the loop for this viewer
 									} else {
 										try {
