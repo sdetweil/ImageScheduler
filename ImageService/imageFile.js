@@ -2,7 +2,7 @@ var glob = require("glob")
 var Prefix="foo://"
 var actualPrefix="file://"
 const fs=require('fs')
-
+let debug=false;
 /*function worker(parm)
 {
 	this.viewerinfo=parm;
@@ -39,7 +39,7 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo) {
 							viewerinfo.images.found.push(Prefix+file)
 					});
 					// let the viewer know we have files
-					console.log(" File handler done with glob list, count="+viewerinfo.images.found.length)
+				if(debug) console.log(" File handler done with glob list, count="+viewerinfo.images.found.length)
 					return 
 				 }
 				 else{
@@ -50,16 +50,16 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo) {
 			});
 		}
 		catch(error){
-			console.log("url error="+error.message);
+		if(debug) console.log("url error="+error.message);
 			return;
 		}
 	//})
 
 }
 module.exports.resolve = async function ( file,ImageItem) {
-	  console.log("in file resolver, file="+file)
+	  if(debug) console.log("in file resolver, file="+file)
 		let f=actualPrefix+file.substring(Prefix.length)
-		console.log("file type resolved filename="+f)		
+	if(debug) console.log("file type resolved filename="+f)		
     return(f)
 }
 module.exports.getPrefix = function () {
@@ -129,10 +129,10 @@ module.exports.listFiles = function(Authinfo,path, FoldersOnly, callback){
 				}
 				if(!path.endsWith("/"))
 				{path+="/";}
-				console.log("file path="+path);
+			if(debug) console.log("file path="+path);
 				for(let file of Files)
 				{
-					console.log("in file listFiles processing for, file="+file);
+				if(debug) console.log("in file listFiles processing for, file="+file);
 					var entry = {}
 					var type=""
 					// don't send back the source path entry
@@ -159,7 +159,7 @@ module.exports.listFiles = function(Authinfo,path, FoldersOnly, callback){
 									// leave this line present all the time
 
 								}
-								console.log("checking filetype="+requested_filetype)
+							if(debug) console.log("checking filetype="+requested_filetype)
 								if(requested_filetype!="" && !file.toLowerCase().endsWith(requested_filetype.toLowerCase()))
 								{continue;}
 							}
@@ -170,7 +170,7 @@ module.exports.listFiles = function(Authinfo,path, FoldersOnly, callback){
 
 						entry.name=file;
 						entry.filetype=type
-						console.log("have file entry="+ entry.name+" type="+entry.filetype);
+					if(debug) console.log("have file entry="+ entry.name+" type="+entry.filetype);
 						files.push(entry)
 					}
 				}
@@ -179,7 +179,7 @@ module.exports.listFiles = function(Authinfo,path, FoldersOnly, callback){
 			}
 			else
 			{
-				console.log("glob failed err="+err)
+			if(debug) console.log("glob failed err="+err)
 				callback(err,null)
 
 			}

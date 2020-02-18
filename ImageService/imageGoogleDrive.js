@@ -5,6 +5,7 @@ var waiting=false;
 var common= require(__dirname+"/common.js");
 var url_prefix="https://drive.google.com/uc?id="
 var url_suffix="";
+let debug=false;
 //var redirectUrl="http://detweiler.dyndns.org:3000/oauth2callback"; //"https://developers.google.com/oauthplayground";
 const {OAuth2Client} = require("google-auth-library");
 var ObjectId = require('mongodb').ObjectId;
@@ -49,7 +50,7 @@ async function getNewToken(oauth2Clientx, Authinfo) {
 	});
 	//let body = "{}";
 
-	console.log("authc="+querystring.stringify(oauth2Clientx)+"\n===url="+authUrl);
+if(debug) console.log("authc="+querystring.stringify(oauth2Clientx)+"\n===url="+authUrl);
 	
  /*const post_body1 = querystring.stringify({
 	"redirect_uri": oauth2Clientx.redirectUri,
@@ -66,7 +67,7 @@ async function getNewToken(oauth2Clientx, Authinfo) {
 		"refresh_token":oauth2Clientx.credentials.refresh_token,
 		"scope": SCOPES
 	});
-	console.log("done="+post_body);
+if(debug) console.log("done="+post_body);
 	let refresh_request = {
 		hostname : "www.googleapis.com",
 		path:"/oauth2/v4/token",
@@ -82,11 +83,11 @@ async function getNewToken(oauth2Clientx, Authinfo) {
 	var post_req = https.request(refresh_request, function(res) {
 		res.setEncoding("utf8");
 		res.on("data", function (chunk) {
-			console.log("Response: " + chunk);
+		if(debug) console.log("Response: " + chunk);
 			access_code+=chunk;
 		});
 		res.on("error",function(){
-			console.log("error="+err);
+		if(debug) console.log("error="+err);
 		});
 		res.on("end",function(err){
 			if(err==null)
@@ -97,17 +98,17 @@ async function getNewToken(oauth2Clientx, Authinfo) {
 					if(ac.access_token!=null)
 					{
 						oauth2Clientx.credentials.access_token= ac.access_token;
-						console.log("access token info="+ac.access_token);
+					if(debug) console.log("access token info="+ac.access_token);
 						resolve(oauth2Clientx)
 					}
 					else{
-						console.log("refresh error="+ac.error_description);
+					if(debug) console.log("refresh error="+ac.error_description);
 						reject(ac);
 					}				
 				}
 			}
 			else{
-				console.log("get token end, error="+err);
+			if(debug) console.log("get token end, error="+err);
 				reject(err);
 			}
 		});
@@ -124,7 +125,7 @@ async function getNewToken(oauth2Clientx, Authinfo) {
  */
 
 async function listFiles(auth,parents,type,nextPageToken,Files) {
-	console.log("auth="+JSON.stringify(auth));
+if(debug) console.log("auth="+JSON.stringify(auth));
  // return new Promise((resolve,reject) =>{ 
     var extra="";
     switch(type){
@@ -147,12 +148,12 @@ async function listFiles(auth,parents,type,nextPageToken,Files) {
       q+="parents in '"+parents+"' and ";
     }
     q+= extra;
-    console.log("query="+q);
+   if(debug) console.log("query="+q);
     var px = {auth:auth,pageToken:nextPageToken, pagesize:100,fields:"nextPageToken, files(id, name,parents,mimeType)",q:q};
 		try {
 			let response= await drive.files.list(px) //, (err, response) => {
 			nextPageToken=response.nextPageToken;
-			console.log("there were "+response.data.files.length+" file entries returned");
+		if(debug) console.log("there were "+response.data.files.length+" file entries returned");
 			if (response.data.files.length> 0)
 			{
 				Files=Files.concat(response.data.files);
@@ -167,19 +168,19 @@ async function listFiles(auth,parents,type,nextPageToken,Files) {
 				}
 				else
 				{
-					console.log("no more files, return to caller="+auth.access_token);
+				if(debug) console.log("no more files, return to caller="+auth.access_token);
 					return({files:Files,token:null})
 				}
 			}
 			else
 			{
-				console.log("no files, return to caller="+auth.access_token);
+			if(debug) console.log("no files, return to caller="+auth.access_token);
 				return({files:Files,token:nextPageToken})
 			}
 		}
 		catch(err) {
-			console.log("The API returned an error: " + err);
-			console.log("error="+JSON.stringify(err));
+		if(debug) console.log("The API returned an error: " + err);
+		if(debug) console.log("error="+JSON.stringify(err));
 			if( err.message == 'unauthorized_client' || 
 				 (err.errors != undefined && err.errors[0].message.includes("Invalid Credentials"))){
 				//auth.credentials.refresh_token="1/4WQ7AHQPnEDP2pgdZXePKf9YhdQHVg9hl5f9_CtlfXk";
@@ -236,7 +237,7 @@ function createClient(Authinfo) {
 		});
 		const server = app.listen(3000, () => {
 			// open the browser to the authorize url to start the workflow
-			console.log("opening browser")
+		if(debug) console.log("opening browser")
 			opn(authorizeUrl, {wait: true});
 		});
   });
@@ -251,7 +252,7 @@ function worker(parm)
 
 // used to list the files to display NOW
 module.exports.listImageFiles = async function (ImageItem, viewerinfo, callback) {
-	console.log("in handler for google drive");
+if(debug) console.log("in handler for google drive");
   //return new Promise((resolve,reject) =>{
     // if the file path has a wildcard, OR does NOT contain a . (just folders)
     if (ImageItem.Image.PathFromSource.indexOf("*") >= 0 || !ImageItem.Image.PathFromSource.includes("."))
@@ -269,11 +270,11 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo, callback)
         } 
         catch (error)
         {
-					 console.log("drive api setup error="+error)
+					if(debug) console.log("drive api setup error="+error)
 					 throw(error);
         }
       }
-      console.log("auth info="+JSON.stringify(ImageItem.Source.Authinfo));
+     if(debug) console.log("auth info="+JSON.stringify(ImageItem.Source.Authinfo));
 			
 			oauth2Client= await setupclient(ImageItem.Source.Authinfo);
 			
@@ -290,7 +291,7 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo, callback)
         if(pathpart!="" && !pathpart.includes("*"))
         {
           folder_names+=" or ( name = '"+pathpart+"')";
-          console.log("path_entries adding="+pathpart);
+         if(debug) console.log("path_entries adding="+pathpart);
           path_entries.push({name:pathpart,id:"",parent:""});
         }
       }
@@ -301,7 +302,7 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo, callback)
       // get the list of files that matter
 			try {
 				let x=await listFiles(oauth2Client,folder_names,3,null,filelist)//.then( 
-				console.log("back from get path name ids, count="+x.files.length);
+			if(debug) console.log("back from get path name ids, count="+x.files.length);
 				// assume the root
 				var parents="root";
 				if(path_entries.length>0)
@@ -312,47 +313,47 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo, callback)
 					if(parents=="")
 					{parents="root";}
 				}
-				console.log("out dpath="+parents);
+			if(debug) console.log("out dpath="+parents);
 				filelist=[];
 				var justFiles=2;  // just files
 				// get the list of files that matter
 				try {
 					let x= await listFiles(oauth2Client,parents,justFiles,null,filelist)// .then(
-					console.log("have "+x.files.length+" files available");
+				if(debug) console.log("have "+x.files.length+" files available");
 					for (let file of x.files)
 					{
-						console.log("processing file="+file.name+" id="+file.id+" file info="+JSON.stringify(file));
+					if(debug) console.log("processing file="+file.name+" id="+file.id+" file info="+JSON.stringify(file));
 						if (file["mimeType"].includes("image"))
 						{
-							console.log("file="+Prefix + file.id);
+						if(debug) console.log("file="+Prefix + file.id);
 							viewerinfo.images.found.push(Prefix + file.id)
-							// console.log("Drive " + file)
+							//if(debug) console.log("Drive " + file)
 						}
 					}
 					// if the access token has changed                 
 					if(x.token != undefined && x.token!==ImageItem.Source.Authinfo.OAuthid && 0==1)
 					{
-						console.log("end of file list new_token="+x.token+" old token="+ImageItem.Source.Authinfo.OAuthid);										
+					if(debug) console.log("end of file list new_token="+x.token+" old token="+ImageItem.Source.Authinfo.OAuthid);										
 						// save it in the running item for next cycle
 						oauth2Client.credentials.refresh_token=oauth2Client.credentials.access_token=ImageItem.Source.Authinfo.OAuthid=x.token;
-						console.log("updating database for datasource id="+ImageItem.Source._id);
+					if(debug) console.log("updating database for datasource id="+ImageItem.Source._id);
 						try {
 							let result=await common.getdb().collection("DataSources").update({_id: ObjectId(ImageItem.Source._id) },ImageItem.Source)
-							console.log("doc updated")
+						if(debug) console.log("doc updated")
 						}
 						catch(error)
 						{
-							console.log("database updated failed err="+error);
+						if(debug) console.log("database updated failed err="+error);
 							throw(error)
 						}
 					}
 					// let the viewer know we have files
-					console.log("Drive  sending files back count=" + viewerinfo.images.found.length);
+				if(debug) console.log("Drive  sending files back count=" + viewerinfo.images.found.length);
 					return
 				}
 				catch(err)
 				{
-					console.log("error getting file list="+err);
+				if(debug) console.log("error getting file list="+err);
 					return
 				}
 			} 
@@ -362,7 +363,7 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo, callback)
     }
     else
     {
-      console.log("only one file entry="+Prefix + ImageItem.Source.Root + ImageItem.Image.PathFromSource);
+     if(debug) console.log("only one file entry="+Prefix + ImageItem.Source.Root + ImageItem.Image.PathFromSource);
       // no wildcard, so just one file entry
       // construct the url from the source and image entries
       //var url = ImageItem.Source.Root + ImageItem.Image.PathFromSource
@@ -398,7 +399,7 @@ async function setupclient(Authinfo){
 				catch(error){
 					let message=error.error_description;
 					if(message.includes("expired") || message.includes("revoked")){
-						console.log("setup create failed="+error)
+					if(debug) console.log("setup create failed="+error)
 					}
 				}
 			}
@@ -406,7 +407,7 @@ async function setupclient(Authinfo){
 			{
 				newClient=await createClient(Authinfo)				
 				newClient.tokeninfo=await newClient.getTokenInfo(newClient.credentials.access_token);
-				console.log("setup for auto update of tokens");
+			if(debug) console.log("setup for auto update of tokens");
 				if(ImageItem != null){							
 					ImageItem.Source.Authinfo.OAuthid=newClient.credentials.refresh_token;
 					try { 
@@ -414,29 +415,29 @@ async function setupclient(Authinfo){
 						let id= ImageItem.Source._id
 						delete  ImageItem.Source._id
 						db.collection("DataSources").update({_id: ObjectId(id) },ImageItem.Source, (error,count,status) => {
-							  console.log(count + "objects were updated, status="+JSON.stringify(status))
+							 if(debug) console.log(count + "objects were updated, status="+JSON.stringify(status))
 						})
 					}
 					catch(error){
-						console.log("db update failed="+error);
+					if(debug) console.log("db update failed="+error);
 					}
 	
 					newClient.on('tokens', async (tokens) => {
-						console.log("tokens updated");
+					if(debug) console.log("tokens updated");
 						if (tokens.refresh_token) {
 							// store the refresh_token in my database!
-							console.log(tokens.refresh_token);
+						if(debug) console.log(tokens.refresh_token);
 							try {								
 									ImageItem.Source.Authinfo.OAuthid=tokens.refresh_token;
 									let db = common.getdb()
 									let id= ImageItem.Source._id
 									delete  ImageItem.Source._id									
 									await db.collection("DataSources").update({_id: ObjectId(id) },ImageItem.Source)
-									console.log("doc updated")
+								if(debug) console.log("doc updated")
 								}						
 								catch(error)
 								{
-									console.log("database updated failed err="+error);
+								if(debug) console.log("database updated failed err="+error);
 									throw(error)
 								}
 						}											
@@ -451,7 +452,7 @@ async function setupclient(Authinfo){
 }
 
 module.exports.resolve = async function (file,ImageItem) {
-	console.log("file resolver returning "+url_prefix+file.substring(Prefix.length)+url_suffix+" for "+file);
+if(debug) console.log("file resolver returning "+url_prefix+file.substring(Prefix.length)+url_suffix+" for "+file);
     var id=file.substring(Prefix.length)
 		try { 
 				let oauth2Clienty= await setupclient(ImageItem.Source.Authinfo);
@@ -467,23 +468,23 @@ module.exports.resolve = async function (file,ImageItem) {
           var p2={kind: "drive#permission",type:"anyone",role:"reader"}
 					try {
 						let newPermissions = await drive.permissions.create({fileId:id,auth:oauth2Clienty,resource:p2})// ,(err,newPermissions)=>{
-						console.log("new permissions="+JSON.stringify(newPermissions));		
+					if(debug) console.log("new permissions="+JSON.stringify(newPermissions));		
 						oauth2Client=oauth2Clienty;
 						return(url_prefix+id+url_suffix)
 					}
 					catch(err) {
-						console.log("create permission error="+err)
+					if(debug) console.log("create permission error="+err)
 						throw("create permission error="+err)
 					}
         }
         else{
-          console.log("google resolve returning "+url_prefix+id+url_suffix+" for file="+file)
+         if(debug) console.log("google resolve returning "+url_prefix+id+url_suffix+" for file="+file)
           return(url_prefix+id+url_suffix)
         }
 		}
 		catch(err) {
-			console.log("file permissions error="+err.message);
-			console.log(err.stack)
+		if(debug) console.log("file permissions error="+err.message);
+		if(debug) console.log(err.stack)
 			throw("file permissions error="+err)
 		}
 }
@@ -511,7 +512,7 @@ module.exports.listFiles = async function(Authinfo,dpath, FoldersOnly, callback)
 		if(pathpart!="" && !pathpart.includes("*"))
 		{
 			folder_names+=" or ( name = '"+pathpart+"')";
-			console.log("path_entries adding="+pathpart);
+		if(debug) console.log("path_entries adding="+pathpart);
 			path_entries.push({name:pathpart,id:"",parent:""});
 		}
 	}
@@ -522,7 +523,7 @@ module.exports.listFiles = async function(Authinfo,dpath, FoldersOnly, callback)
 	// get the list of files that matter
 	try {
 		let x= await listFiles(oauth2Clientl,folder_names,3,null,filelist)		
-		console.log("back from get path name ids, count="+x.files.length);
+	if(debug) console.log("back from get path name ids, count="+x.files.length);
 		// assume the root
 		var parents="root";
 		if(path_entries.length>0)
@@ -533,17 +534,17 @@ module.exports.listFiles = async function(Authinfo,dpath, FoldersOnly, callback)
 			if(parents=="")
 			{parents="root";}
 		}
-		console.log("out dpath="+parents);
+	if(debug) console.log("out dpath="+parents);
 		filelist=[];
 		// do we want JUST folder?
 		justFiles=(FoldersOnly=="true"?1:2);
 		// get the list of files that matter
 		try {
 			let x= await listFiles(oauth2Clientl,parents,justFiles,null,filelist)
-			console.log("have "+x.files.length+" files available");
+		if(debug) console.log("have "+x.files.length+" files available");
 			let Files=[]
 			for (let file of x.files) {
-				console.log("processing file="+file.name+" id="+file.id+" file info="+JSON.stringify(file));
+			if(debug) console.log("processing file="+file.name+" id="+file.id+" file info="+JSON.stringify(file));
 				// if we are requesting files and folders
 				if(FoldersOnly=="true" && !file["mimeType"].includes("folder") )
 				{continue;}
@@ -560,14 +561,14 @@ module.exports.listFiles = async function(Authinfo,dpath, FoldersOnly, callback)
 		}
 	}
 	catch(error){
-		console.log("remote file list error="+error);
+	if(debug) console.log("remote file list error="+error);
 		callback(error,null,null);
 	}
 }
 var updatePathWithIDs = function(path_array,name_array)
 {
 
-	console.log("in update parts");
+if(debug) console.log("in update parts");
 	var Matched=path_array.length;
 	// loop thru the split path backwards
 	for(var i=path_array.length-1; i>=0; i--)
@@ -575,27 +576,27 @@ var updatePathWithIDs = function(path_array,name_array)
 		// loop thru the found folder names
 		for(var n=0;n<name_array.length;n++)
 		{
-			console.log("checking "+path_array[i].name +" = "+name_array[n].name);
+		if(debug) console.log("checking "+path_array[i].name +" = "+name_array[n].name);
       	// if the names match
 			if(path_array[i].name==name_array[n].name)
 			{
-				console.log("have name match");
+			if(debug) console.log("have name match");
 				if(i<path_array.length-1)
 				{
-					console.log(" not last path part entry");
+				if(debug) console.log(" not last path part entry");
           	// if the current found NAMEd element�s ID does NOT
 					// match the childs (+1) PARENT
 
-					console.log(i+"=i comparing "+path_array[i+1].parent+" with "+name_array[n].id);
+				if(debug) console.log(i+"=i comparing "+path_array[i+1].parent+" with "+name_array[n].id);
 					if(name_array[n].id!=path_array[i+1].parent)
 					{
-						console.log("parent ID does not match");
+					if(debug) console.log("parent ID does not match");
 						// then not a NAME match, keep looking
 						continue;
  					  }
 					else
 					{
-						console.log("parent ID does match");
+					if(debug) console.log("parent ID does match");
 						// replace the name with the id
 						path_array[i].name=name_array[n].id;
 						// set the actual parent to the named folder parent
@@ -608,10 +609,10 @@ var updatePathWithIDs = function(path_array,name_array)
 				}
 				else
 				{
-					console.log(" leaf most node i="+i);
+				if(debug) console.log(" leaf most node i="+i);
 					path_array[i].name=name_array[n].id;
 					path_array[i].parent=name_array[n].parents[0];
-					console.log("new parent="+name_array[n].parents[0]);
+				if(debug) console.log("new parent="+name_array[n].parents[0]);
 					Matched--;
 					break;
 				}
@@ -619,7 +620,7 @@ var updatePathWithIDs = function(path_array,name_array)
 		}
 	}
 	return path_array;
-//	console.log(Matched+"=Matched returning="+Matched==0?path_array:null);
+//if(debug) console.log(Matched+"=Matched returning="+Matched==0?path_array:null);
 //	 return Matched==0?path_array:null;
 }
 

@@ -82,7 +82,7 @@ start_connections: function(config, callback){
 	// start the discovery server
 	let HOST = '0.0.0.0';
 
-	let response = new Buffer("DISCOVER_MIRRORSERVER_RESPONSE:" + config.serverPort);
+	let response = new Buffer.from("DISCOVER_MIRRORSERVER_RESPONSE:" + config.serverPort);
 	let request = "DISCOVER_MIRRORSERVER_REQUEST:";
 
 	let server = dgram.createSocket('udp4');

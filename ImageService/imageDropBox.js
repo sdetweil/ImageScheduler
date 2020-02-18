@@ -3,6 +3,7 @@ var fetch = require('isomorphic-fetch');
 var Prefix= "dropbox://";
 var dbx=null;
 var waiting=false;
+let debug=false;
 function worker(parm)
 {
 	this.viewerinfo=parm;
@@ -23,19 +24,19 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo) {
       if(dpath==='/')
         dpath="";
 			if (dbx == null){
-				console.log("dropbox oauth="+JSON.stringify(ImageItem.Source.Authinfo));
+			if(debug) console.log("dropbox oauth="+JSON.stringify(ImageItem.Source.Authinfo));
         try {
 					dbx = new Dropbox.Dropbox({
 						accessToken: ImageItem.Source.Authinfo.OAuthid, fetch:fetch
 					});
         }
         catch(error){
-				 console.log("dropbox connection error ="+error)
+			if(debug) console.log("dropbox connection error ="+error)
          throw( "dropbox connection error ="+error)
         }
 			}
 			try {
-				console.log("getting list of files from dropbox")
+			if(debug) console.log("getting list of files from dropbox")
 				let list = await dbx.filesListFolder({
 					path: dpath
 				})
@@ -50,7 +51,7 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo) {
                 viewerinfo.images.found.push(Prefix + dpath + (filename.startsWith("/")?"/":"/")+ filename)
               }
 							//else
-							//	console.log("skipping file that doesn't match="+filename);
+							//if(debug) console.log("skipping file that doesn't match="+filename);
             }
           }
           //console.log("dropbox returning list="+response.entries.length);
@@ -58,7 +59,7 @@ module.exports.listImageFiles = async function (ImageItem, viewerinfo) {
           return
 			}
 			catch (error){             
-               console.log("Dropbox catch " + error);
+             if(debug) console.log(("Dropbox catch " + error);
 							 throw("Dropbox catch " + error);
           };
 		} else {
@@ -85,23 +86,23 @@ module.exports.resolve = async function (file,ImageItem) {
 				return(response.url + "&raw=1")
 				}
         catch (error ) {
-					  console.log("dbx sharing error="+JSON.stringify(error));
+					if(debug) console.log(("dbx sharing error="+JSON.stringify(error));
             if (
               (error.error.error_summary.startsWith("shared_link_already_exists")) ||
                 (error.error.error_summary.startsWith("settings_error/not_authorized"))) {
 								try {
 									let response=await dbx.sharingListSharedLinks(args)
 									waiting = false;
-									console.log("reshare url=" + response.links[0].url)
+								if(debug) console.log("reshare url=" + response.links[0].url)
 									return(response.links[0].url + "&raw=1")
 								}
 							  catch(error){
 									waiting = false;
-									console.log("reshare failed url=" + file+ " error="+JSON.stringify(error))
+								if(debug) console.log("reshare failed url=" + file+ " error="+JSON.stringify(error))
 									throw("failed reshare file="+file);
 								}                
             } else {
-              console.log("Dropbox download " + error);
+            if(debug) console.log(("Dropbox download " + error);
               waiting = false;
 							throw("Dropbox created shared link failed, file="+file +" error=" + error)
             }
@@ -125,7 +126,7 @@ module.exports.listFiles = function(Authinfo,path,FoldersOnly, callback){
 				});
         }
         catch(error){
-				 console.log("dropbox connection error ="+error)
+			if(debug) console.log("dropbox connection error ="+error)
          throw( "dropbox connection error ="+error)
         }
 	}
@@ -145,7 +146,7 @@ module.exports.listFiles = function(Authinfo,path,FoldersOnly, callback){
 		.then(
 			function(response)
 			{
-				console.log(response);
+			if(debug) console.log(response);
 				let files=[]
 				for(let file of response.entries)
 				{
@@ -156,16 +157,16 @@ module.exports.listFiles = function(Authinfo,path,FoldersOnly, callback){
 					entry.filetype=file[".tag"].replace("f","F");
 					entry.name=file.name
 					files.push(entry)
-					console.log(file)
+				if(debug) console.log(file)
 				}
-				console.log("dropbox returning list="+files.length);
+			if(debug) console.log("dropbox returning list="+files.length);
 				callback(null,files,null)
 			}
 		)
 		.catch(
 			function(error)
 			{
-				console.log("dropbox returning error="+error);
+			if(debug) console.log("dropbox returning error="+error);
 				callback(error,null)
 			}
 		);
