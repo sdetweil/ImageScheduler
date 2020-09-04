@@ -14,7 +14,7 @@
     "google-auth-library": "^4.2.0",
     "googleapis": "^40.0.0",
     "isomorphic-fetch": "^2.2.1",
-    "mongodb": "^2.2.11",
+    "mongodb": "^3.6.1",
     "open": "^7.0.0"
   }
 }
